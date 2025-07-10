@@ -656,34 +656,34 @@ class _PrayersScreenState extends State<PrayersScreen> {
                                   ),
                                   child: Padding(
                                     padding: const EdgeInsets.only(left: 20.0),
-                                    child: Row(
-                                      children: [
-                                        Icon(pt.icon, color: AppColors.forestGreen, size: 24),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Text(
-                                            pt.name,
-                                            style: GoogleFonts.poppins(
-                                              color: Colors.black,
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 16,
-                                            ),
+                                  child: Row(
+                                    children: [
+                                      Icon(pt.icon, color: AppColors.forestGreen, size: 24),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          pt.name,
+                                          style: GoogleFonts.poppins(
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 16,
                                           ),
                                         ),
+                                      ),
                                         Padding(
                                           padding: const EdgeInsets.only(right: 16.0),
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              Text(
-                                                timeFormat.format(effectiveTime),
-                                                style: GoogleFonts.poppins(
-                                                  color: Colors.black,
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 15,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 8),
+                                      Text(
+                                        timeFormat.format(effectiveTime),
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
                                               IconButton(
                                                 icon: Icon(
                                                   pt.notificationEnabled ? Icons.notifications_active : Icons.notifications_none,
@@ -694,7 +694,7 @@ class _PrayersScreenState extends State<PrayersScreen> {
                                             ],
                                           ),
                                         ),
-                                      ],
+                                    ],
                                     ),
                                   ),
                                 ),

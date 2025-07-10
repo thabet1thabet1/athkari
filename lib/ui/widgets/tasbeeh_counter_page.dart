@@ -15,7 +15,7 @@ class _TasbeehCounterPageState extends State<TasbeehCounterPage> {
     setState(() {
       counter++;
       total++;
-      if (counter > 33) {
+      if (counter == 33) {
         counter = 0;
       }
     });
@@ -129,7 +129,7 @@ class _TasbeehCounterPageState extends State<TasbeehCounterPage> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 53),
+                const SizedBox(height: 29),
                 Text(
                   'Tap the circle to count',
                   style: TextStyle(
@@ -137,7 +137,7 @@ class _TasbeehCounterPageState extends State<TasbeehCounterPage> {
                     fontSize: 15,
                   ),
                 ),
-                const SizedBox(height: 85),
+                const SizedBox(height: 60),
                 // Total count horizontal and bold, moved up
                 Container(
                   padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 32),
@@ -159,7 +159,7 @@ class _TasbeehCounterPageState extends State<TasbeehCounterPage> {
                 const SizedBox(height: 24),
                 Spacer(),
                 Padding(
-                  padding: EdgeInsets.only(bottom: 50),
+                  padding: EdgeInsets.only(bottom: 18),
                   child: Center(
                     child: Text(
                       'لا تنسو اخوانكم في فلسطين من صالح دعائكم',

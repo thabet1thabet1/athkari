@@ -20,6 +20,10 @@ class CategoryButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.black.withValues(alpha: 0.07),
             borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+            border: Border.all(
+              color: const Color(0xFFB2C2B9), // subtle gray
+              width: 1.2,
+            ),
           ),
           child: Row(
             children: [

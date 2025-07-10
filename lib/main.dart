@@ -32,7 +32,78 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: 'Athkar App',
         theme: AppTheme.lightTheme,
-        home: const MainScaffold(),
+        home: const SplashScreen(),
+      ),
+    );
+  }
+}
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOutCubic),
+    );
+
+    // Start fade out after 3 seconds
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => const MainScaffold(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(
+                opacity: CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeInOutCubic,
+                ),
+                child: child,
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 1500),
+          ),
+        );
+        _animationController.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('lib/images/E7CA2E33-394F-4EBE-873D-F072281FF8B7.JPEG'),
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -41,9 +112,9 @@ class MyApp extends StatelessWidget {
 class MainScaffold extends StatefulWidget {
   const MainScaffold({super.key});
 
-  static final List<Widget Function(ScrollController)> _screenBuilders = [
+  static final List<Widget Function(ScrollController?)> _screenBuilders = [
     (controller) => AthkarScreen(scrollController: controller),
-    (controller) => QuranScreen(),
+    (controller) => QuranScreen(scrollController: controller),
     (controller) => PrayersScreen(scrollController: controller),
   ];
 
@@ -52,10 +123,11 @@ class MainScaffold extends StatefulWidget {
 }
 
 class _MainScaffoldState extends State<MainScaffold> {
-  final ScrollController _scrollController = ScrollController();
   double _slideValue = 0.0; // 0 = shown, 1 = fully hidden
-
   static const double _hideDistance = 64.0; // nav bar height
+  final ScrollController _scrollController = ScrollController();
+  double _lastOffset = 0.0;
+  bool _isNavHidden = false;
 
   @override
   void initState() {
@@ -63,19 +135,23 @@ class _MainScaffoldState extends State<MainScaffold> {
     _scrollController.addListener(_onScroll);
   }
 
-  void _onScroll() {
-    final offset = _scrollController.position.pixels;
-    double newSlide = (offset / _hideDistance).clamp(0.0, 1.0);
-    if (newSlide != _slideValue) {
-      setState(() => _slideValue = newSlide);
-    }
-  }
-
   @override
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    final offset = _scrollController.position.pixels;
+    // The amount to slide: 0 = shown, 1 = fully hidden
+    double slide = (offset / _hideDistance).clamp(0.0, 1.0);
+    if ((slide - _slideValue).abs() > 0.01) {
+      setState(() {
+        _slideValue = slide;
+      });
+    }
+    _lastOffset = offset;
   }
 
   @override
@@ -88,6 +164,7 @@ class _MainScaffoldState extends State<MainScaffold> {
           // Custom background layer
           const _AppBackground(),
           // Main content
+          // Pass the shared ScrollController to each screen
           MainScaffold._screenBuilders[navProvider.currentIndex](_scrollController),
           // Glassy background behind nav bar (follows scroll, now taller and moved down)
           Positioned(
@@ -187,7 +264,7 @@ class GlassNavBar extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.grey.withAlpha(46),
             borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: const Color(0xFFB6EFC6), width: 1.5), // green border
+            border: Border.all(color: const Color.fromARGB(255, 225, 223, 223), width: 1.5), // gray border
             boxShadow: [
               BoxShadow(
                 color: const Color(0xFFB6EFC6).withOpacity(0.25), // green shadow
