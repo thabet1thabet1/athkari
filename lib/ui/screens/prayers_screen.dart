@@ -411,128 +411,73 @@ class _PrayersScreenState extends State<PrayersScreen> {
     final forestGreen = AppColors.forestGreen;
     final white = AppColors.white;
     final timeFormat = DateFormat('h:mm a');
-    return Scaffold(
-      backgroundColor: white,
-      appBar: AppBar(
-        title: Text('Prayers', style: GoogleFonts.poppins(color: AppColors.forestGreen, fontWeight: FontWeight.bold)),
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      body: ListView(
-        controller: widget.scrollController,
-        padding: EdgeInsets.zero,
-        children: [
-          const SizedBox(height: 16),
-          // 1. Next Prayer Box (IMAGE BACKGROUND STYLE)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0.0),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(24.0),
-              child: Stack(
-                children: [
-                  // Remove BackdropFilter and glassmorphic container, use image background
-                  Container(
-                    height: 200.0,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24.0),
-                      border: Border.all(color: AppColors.forestGreen, width: 3),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.forestGreen.withOpacity(0.10),
-                          blurRadius: 16,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                      image: _prayerImages[_nextPrayerName] != null
-                          ? DecorationImage(
-                              image: AssetImage(_prayerImages[_nextPrayerName]!),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                    ),
-                    child: null,
-                  ),
-                  Container(
-                    height: 200.0,
-                    padding: const EdgeInsets.all(16.0),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24.0),
-                      border: Border.all(color: Colors.transparent),
-                      color: Colors.white.withOpacity(0.15), // reduced overlay for less blur
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              'Next Prayer • ${_formatDuration(_timeLeft)} left',
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: Colors.white,
-                                shadows: [
-                                  Shadow(
-                                    color: Colors.black,
-                                    blurRadius: 6,
-                                    offset: Offset(0, 0), // thick border
-                                  ),
-                                  Shadow(
-                                    color: Colors.black.withOpacity(0.3),
-                                    blurRadius: 8,
-                                    offset: Offset(2, 2), // reduced soft shadow
-                                  ),
-                                ],
-                              ),
+    return Column(
+      children: [
+        AppBar(
+          title: Text('Prayers', style: GoogleFonts.poppins(color: AppColors.forestGreen, fontWeight: FontWeight.bold)),
+          automaticallyImplyLeading: false,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+        ),
+        Expanded(
+          child: ListView(
+            controller: widget.scrollController,
+            padding: EdgeInsets.zero,
+            children: [
+              const SizedBox(height: 16),
+              // 1. Next Prayer Box (IMAGE BACKGROUND STYLE)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0.0),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24.0),
+                  child: Stack(
+                    children: [
+                      // Remove BackdropFilter and glassmorphic container, use image background
+                      Container(
+                        height: 200.0,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(24.0),
+                          border: Border.all(color: AppColors.forestGreen, width: 3),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.forestGreen.withOpacity(0.10),
+                              blurRadius: 16,
+                              offset: const Offset(0, 8),
                             ),
-                            const Spacer(),
-                            Icon(Icons.access_time, color: Colors.black.withOpacity(0.7), size: 20),
                           ],
+                          image: _prayerImages[_nextPrayerName] != null
+                              ? DecorationImage(
+                                  image: AssetImage(_prayerImages[_nextPrayerName]!),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                         ),
-                        const SizedBox(height: 18),
-                        Expanded(
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                        child: null,
+                      ),
+                      Container(
+                        height: 200.0,
+                        padding: const EdgeInsets.all(16.0),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(24.0),
+                          border: Border.all(color: Colors.transparent),
+                          color: Colors.white.withOpacity(0.15), // reduced overlay for less blur
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Row(
                               children: [
                                 Text(
-                                  _nextPrayerName,
-                                  style: TextStyle(
-                                    fontFamily: 'Amiri',
-                                    fontSize: 28,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    height: 1.5,
-                                    shadows: [
-                                      Shadow(
-                                        color: Colors.black,
-                                        blurRadius: 8,
-                                        offset: Offset(0, 0), // thick border
-                                      ),
-                                      Shadow(
-                                        color: Colors.black.withOpacity(0.3),
-                                        blurRadius: 8,
-                                        offset: Offset(2, 2), // reduced soft shadow
-                                      ),
-                                    ],
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  _nextPrayerTime != null ? timeFormat.format(_nextPrayerTime!) : '--:--',
+                                  'Next Prayer • ${_formatDuration(_timeLeft)} left',
                                   style: GoogleFonts.poppins(
-                                    color: Colors.white,
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 22,
+                                    fontSize: 16,
+                                    color: Colors.white,
                                     shadows: [
                                       Shadow(
                                         color: Colors.black,
-                                        blurRadius: 8,
+                                        blurRadius: 6,
                                         offset: Offset(0, 0), // thick border
                                       ),
                                       Shadow(
@@ -543,225 +488,267 @@ class _PrayersScreenState extends State<PrayersScreen> {
                                     ],
                                   ),
                                 ),
+                                const Spacer(),
+                                Icon(Icons.access_time, color: Colors.black.withOpacity(0.7), size: 20),
                               ],
                             ),
-                          ),
+                            const SizedBox(height: 18),
+                            Expanded(
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      _nextPrayerName,
+                                      style: TextStyle(
+                                        fontFamily: 'Amiri',
+                                        fontSize: 28,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        height: 1.5,
+                                        shadows: [
+                                          Shadow(
+                                            color: Colors.black,
+                                            blurRadius: 8,
+                                            offset: Offset(0, 0), // thick border
+                                          ),
+                                          Shadow(
+                                            color: Colors.black.withOpacity(0.3),
+                                            blurRadius: 8,
+                                            offset: Offset(2, 2), // reduced soft shadow
+                                          ),
+                                        ],
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      _nextPrayerTime != null ? timeFormat.format(_nextPrayerTime!) : '--:--',
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 22,
+                                        shadows: [
+                                          Shadow(
+                                            color: Colors.black,
+                                            blurRadius: 8,
+                                            offset: Offset(0, 0), // thick border
+                                          ),
+                                          Shadow(
+                                            color: Colors.black.withOpacity(0.3),
+                                            blurRadius: 8,
+                                            offset: Offset(2, 2), // reduced soft shadow
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 8),
-                        Align(
-                          alignment: Alignment.bottomRight,
-                          child: Text(
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // 2. Location Display Row styled like hijri date in Athkar
+              const SizedBox(height: 18),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 20.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Expanded(
+                      child: Divider(
+                        thickness: 1.2,
+                        endIndent: 12,
+                        color: Color(0xFFB2C2B9),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.location_on, color: forestGreen, size: 20),
+                          const SizedBox(width: 4),
+                          Text(
                             _city,
                             style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.black,
-                                  blurRadius: 6,
-                                  offset: Offset(0, 0), // thick border
-                                ),
-                                Shadow(
-                                  color: Colors.black.withOpacity(0.5),
-                                  blurRadius: 12,
-                                  offset: Offset(2, 2), // soft shadow
-                                ),
-                              ],
+                              color: forestGreen,
+                              fontWeight: FontWeight.bold, // changed from w500 to bold
+                              fontSize: 18, // changed from 15 to 18
                             ),
-                            textAlign: TextAlign.right,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 6),
+                          GestureDetector(
+                            onTap: _showCityPicker,
+                            child: Icon(Icons.add_circle_outline, color: forestGreen, size: 22),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Expanded(
+                      child: Divider(
+                        thickness: 1.2,
+                        indent: 12,
+                        color: Color(0xFFB2C2B9),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // 3. Prayer Times List
+              // Prayer cards container
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(40),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.32),
+                        borderRadius: BorderRadius.circular(40),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.forestGreen.withOpacity(0.10),
+                            blurRadius: 24,
+                            offset: Offset(0, 8),
+                          ),
+                        ],
+                        border: Border.all(color: AppColors.forestGreen.withOpacity(0.13), width: 3.5),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 10),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: List.generate(_prayerTimes.length, (idx) {
+                          final pt = _prayerTimes[idx];
+                          if (pt.name == 'Sunrise') return SizedBox.shrink(); // filter out Sunrise
+                          final effectiveTime = getEffectivePrayerTime(idx);
+                          return Padding(
+                            padding: EdgeInsets.only(bottom: idx == _prayerTimes.length - 1 ? 0 : 12),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(32),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                                child: Container(
+                                  height: 72,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.forestGreen.withOpacity(0.13),
+                                    borderRadius: BorderRadius.circular(32),
+                                    border: Border.all(color: AppColors.forestGreen.withOpacity(0.18)),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 20.0),
+                                    child: Row(
+                                      children: [
+                                        Icon(pt.icon, color: AppColors.forestGreen, size: 24),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            pt.name,
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.only(right: 16.0),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                timeFormat.format(effectiveTime),
+                                                style: GoogleFonts.poppins(
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 15,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              IconButton(
+                                                icon: Icon(
+                                                  pt.notificationEnabled ? Icons.notifications_active : Icons.notifications_none,
+                                                  color: pt.notificationEnabled ? AppColors.forestGreen : Colors.grey[600],
+                                                ),
+                                                onPressed: () => _toggleNotification(idx),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
-          // 2. Location Display Row styled like hijri date in Athkar
-          const SizedBox(height: 18),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 20.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Expanded(
-                  child: Divider(
-                    thickness: 1.2,
-                    endIndent: 12,
-                    color: Color(0xFFB2C2B9),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.03),
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.location_on, color: forestGreen, size: 20),
-                      const SizedBox(width: 4),
-                      Text(
-                        _city,
-                        style: GoogleFonts.poppins(
-                          color: forestGreen,
-                          fontWeight: FontWeight.bold, // changed from w500 to bold
-                          fontSize: 18, // changed from 15 to 18
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      GestureDetector(
-                        onTap: _showCityPicker,
-                        child: Icon(Icons.add_circle_outline, color: forestGreen, size: 22),
-                      ),
-                    ],
-                  ),
-                ),
-                const Expanded(
-                  child: Divider(
-                    thickness: 1.2,
-                    indent: 12,
-                    color: Color(0xFFB2C2B9),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // 3. Prayer Times List
-          // Prayer cards container
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(40),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.32),
-                    borderRadius: BorderRadius.circular(40),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.forestGreen.withOpacity(0.10),
-                        blurRadius: 24,
-                        offset: Offset(0, 8),
-                      ),
-                    ],
-                    border: Border.all(color: AppColors.forestGreen.withOpacity(0.13), width: 3.5),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 10),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: List.generate(_prayerTimes.length, (idx) {
-                      final pt = _prayerTimes[idx];
-                      if (pt.name == 'Sunrise') return SizedBox.shrink(); // filter out Sunrise
-                      final effectiveTime = getEffectivePrayerTime(idx);
-                      return Padding(
-                        padding: EdgeInsets.only(bottom: idx == _prayerTimes.length - 1 ? 0 : 12),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(32),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                            child: Container(
-                              height: 72,
-                              decoration: BoxDecoration(
-                                color: AppColors.forestGreen.withOpacity(0.13),
-                                borderRadius: BorderRadius.circular(32),
-                                border: Border.all(color: AppColors.forestGreen.withOpacity(0.18)),
-                              ),
-                              child: Row(
-                                children: [
-                                  const SizedBox(width: 14),
-                                  Icon(pt.icon, color: AppColors.forestGreen, size: 26),
-                                  const SizedBox(width: 14),
-                                  Expanded(
-                                    child: Text(
-                                      pt.name,
-                                      style: GoogleFonts.poppins(
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 17,
-                                      ),
-                                    ),
-                                  ),
-                                  Text(
-                                    timeFormat.format(effectiveTime),
-                                    style: GoogleFonts.poppins(
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  GestureDetector(
-                                    onTap: () => _toggleNotification(idx),
-                                    child: Icon(
-                                      pt.notificationEnabled ? Icons.notifications_active : Icons.notifications_none,
-                                      color: pt.notificationEnabled ? AppColors.forestGreen : AppColors.forestGreen.withOpacity(0.4),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                ],
-                              ),
-                            ),
+              // 4. Action Buttons
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                child: Column(
+                  children: [
+                    CategoryButton(
+                      icon: Icons.settings,
+                      title: 'Prayer Settings',
+                      onTap: _showManualSettingsDialog,
+                    ),
+                    SizedBox(height: 8),
+                    CategoryButton(
+                      icon: Icons.bed_outlined,
+                      title: 'Sleep Mode',
+                      onTap: () {},
+                    ),
+                    SizedBox(height: 8),
+                    CategoryButton(
+                      icon: Icons.calendar_month,
+                      title: 'Monthly Calendar',
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => MonthlyPrayerCalendarPage(city: _city),
                           ),
-                        ),
-                      );
-                    }),
-                  ),
+                        );
+                      },
+                    ),
+                    SizedBox(height: 8),
+                    CategoryButton(
+                      icon: Icons.notifications_off,
+                      title: 'Qiyam & Midnight',
+                      onTap: _showQiyamMidnightDialog,
+                    ),
+                  ],
                 ),
               ),
-            ),
+              const SizedBox(height: 32),
+            ],
           ),
-          // 4. Action Buttons
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
-            child: Column(
-              children: [
-                CategoryButton(
-                  icon: Icons.settings,
-                  title: 'Prayer Settings',
-                  onTap: _showManualSettingsDialog,
-                ),
-                SizedBox(height: 8),
-                CategoryButton(
-                  icon: Icons.bed_outlined,
-                  title: 'Sleep Mode',
-                  onTap: () {},
-                ),
-                SizedBox(height: 8),
-                CategoryButton(
-                  icon: Icons.calendar_month,
-                  title: 'Monthly Calendar',
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => MonthlyPrayerCalendarPage(city: _city),
-                      ),
-                    );
-                  },
-                ),
-                SizedBox(height: 8),
-                CategoryButton(
-                  icon: Icons.notifications_off,
-                  title: 'Qiyam & Midnight',
-                  onTap: _showQiyamMidnightDialog,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 32),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

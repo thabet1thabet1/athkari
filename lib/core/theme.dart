@@ -5,6 +5,7 @@ class AppColors {
   static const Color forestGreen = Color(0xFF007A4D);
   static const Color darkGray = Color(0xFF333333);
   static const Color white = Colors.white;
+  static const Color kGreenShadow = Color(0xFFB6EFC6); // soft mint green for shadows
 }
 
 class AppTheme {

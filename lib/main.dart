@@ -85,6 +85,9 @@ class _MainScaffoldState extends State<MainScaffold> {
     return Scaffold(
       body: Stack(
         children: [
+          // Custom background layer
+          const _AppBackground(),
+          // Main content
           MainScaffold._screenBuilders[navProvider.currentIndex](_scrollController),
           // Glassy background behind nav bar (follows scroll, now taller and moved down)
           Positioned(
@@ -104,7 +107,7 @@ class _MainScaffoldState extends State<MainScaffold> {
                         duration: const Duration(milliseconds: 300),
                         height: 140,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.35),
+                          color: Colors.white.withAlpha(90),
                           borderRadius: BorderRadius.circular(32),
                         ),
                       ),
@@ -132,7 +135,37 @@ class _MainScaffoldState extends State<MainScaffold> {
           ),
         ],
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
+    );
+  }
+}
+
+// Custom background widget with image background
+class _AppBackground extends StatelessWidget {
+  const _AppBackground();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.expand(
+      child: Stack(
+        children: [
+          // Image background
+          Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('lib/images/IMG_1323.PNG'),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          // White overlay for better text readability
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.7),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -152,14 +185,14 @@ class GlassNavBar extends StatelessWidget {
           duration: const Duration(milliseconds: 300),
           height: 64,
           decoration: BoxDecoration(
-            color: Colors.grey.withValues(alpha: 0.18),
+            color: Colors.grey.withAlpha(46),
             borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: Colors.black12, width: 1.5),
+            border: Border.all(color: const Color(0xFFB6EFC6), width: 1.5), // green border
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.07),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
+                color: const Color(0xFFB6EFC6).withOpacity(0.25), // green shadow
+                blurRadius: 18,
+                offset: const Offset(0, 6),
               ),
             ],
           ),

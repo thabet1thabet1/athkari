@@ -25,7 +25,7 @@ class SwipableCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppConstants.spacing16),
+      padding: const EdgeInsets.only(left: 4, right: 24),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppConstants.cardRadius),
         child: Stack(
@@ -80,7 +80,7 @@ class SwipableCard extends StatelessWidget {
                         content,
                         style: TextStyle(
                           fontFamily: fontFamily,
-                          fontSize: 28,
+                          fontSize: 25,
                           color: textColor,
                           fontWeight: FontWeight.bold,
                           height: 1.5,

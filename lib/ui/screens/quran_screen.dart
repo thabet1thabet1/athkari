@@ -7,24 +7,28 @@ class QuranScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Quran', style: GoogleFonts.poppins(color: AppColors.forestGreen, fontWeight: FontWeight.bold)),
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      body: Center(
-        child: Text(
-          'Quran',
-          style: GoogleFonts.poppins(
-            color: AppColors.forestGreen,
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
+    return Column(
+      children: [
+        AppBar(
+          title: Text('Quran', style: GoogleFonts.poppins(color: AppColors.forestGreen, fontWeight: FontWeight.bold)),
+          automaticallyImplyLeading: false,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+        ),
+        const Expanded(
+          child: Center(
+            child: Text(
+              'Quran',
+              style: TextStyle(
+                color: Color(0xFF228B22), // forest green
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+              ),
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 } 
