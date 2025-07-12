@@ -1,6 +1,10 @@
 PODS:
   - Flutter (1.0.0)
+  - flutter_compass_v2 (0.0.1):
+    - Flutter
   - flutter_local_notifications (0.0.1):
+    - Flutter
+  - flutter_qiblah (0.0.1):
     - Flutter
   - geocoding_ios (1.0.5):
     - Flutter
@@ -16,7 +20,9 @@ PODS:
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
+  - flutter_compass_v2 (from `.symlinks/plugins/flutter_compass_v2/ios`)
   - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
+  - flutter_qiblah (from `.symlinks/plugins/flutter_qiblah/ios`)
   - geocoding_ios (from `.symlinks/plugins/geocoding_ios/ios`)
   - geolocator_apple (from `.symlinks/plugins/geolocator_apple/darwin`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
@@ -25,8 +31,12 @@ DEPENDENCIES:
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
+  flutter_compass_v2:
+    :path: ".symlinks/plugins/flutter_compass_v2/ios"
   flutter_local_notifications:
     :path: ".symlinks/plugins/flutter_local_notifications/ios"
+  flutter_qiblah:
+    :path: ".symlinks/plugins/flutter_qiblah/ios"
   geocoding_ios:
     :path: ".symlinks/plugins/geocoding_ios/ios"
   geolocator_apple:
@@ -38,7 +48,9 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
+  flutter_compass_v2: bdaac539c444ca34617debfa444b037c30be6e54
   flutter_local_notifications: ad39620c743ea4c15127860f4b5641649a988100
+  flutter_qiblah: 453c7fb44af9a329373bcef113c25627d5b8c9e8
   geocoding_ios: 86f1c479822f07a2f79f7094f2b753d1e9e20215
   geolocator_apple: ab36aa0e8b7d7a2d7639b3b4e48308394e8cef5e
   path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564

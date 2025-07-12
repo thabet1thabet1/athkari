@@ -121,7 +121,7 @@ class _QuranScreenState extends State<QuranScreen> {
                 }
               },
               icon: const Icon(Icons.person, color: Colors.white, size: 20),
-              label: Text('Reciter :  AO${_listenModeReciter}', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white)),
+              label: Text('Reciter :  AO$_listenModeReciter', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.forestGreen,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -308,21 +308,30 @@ class _QuranStickyToggleDelegate extends SliverPersistentHeaderDelegate {
   @override
   double get maxExtent => 56;
 
+  static const double fadeStart = 0; // Start fading after title is gone
+  static const double fadeRange = 56; // Fade in over 56px
+  static const double maxBlur = 18.0;
+  static const int maxAlpha = 220;
+
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Material(
-      color: Colors.transparent,
-      child: Container(
-        color: Colors.transparent,
-        alignment: Alignment.center,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4.0),
-          child: _GlassToggle(
-            isRead: isReadMode,
-            onChanged: (val) {
-              debugPrint('Toggle tapped: isReadMode = $val');
-              onToggle(val);
-            },
+    // Only start fading in after the title header (56px) is gone
+    final double fade = ((shrinkOffset - fadeStart) / fadeRange).clamp(0.0, 1.0);
+    final int alpha = (maxAlpha * fade).toInt();
+    final double blur = maxBlur * fade;
+    return ClipRRect(
+      borderRadius: BorderRadius.zero,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        child: Container(
+          color: Colors.white.withAlpha(alpha),
+          alignment: Alignment.center,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4.0),
+            child: _GlassToggle(
+              isRead: isReadMode,
+              onChanged: onToggle,
+            ),
           ),
         ),
       ),
@@ -331,7 +340,7 @@ class _QuranStickyToggleDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(covariant _QuranStickyToggleDelegate oldDelegate) {
-    return true; // Always rebuild when parent state changes
+    return isReadMode != oldDelegate.isReadMode;
   }
 }
 
@@ -342,20 +351,35 @@ class _QuranStickySearchDelegate extends SliverPersistentHeaderDelegate {
   _QuranStickySearchDelegate({required this.search, required this.onSearch});
 
   @override
-  double get minExtent => 64;
+  double get minExtent => 80; // 64 + 16 extra
   @override
-  double get maxExtent => 64;
+  double get maxExtent => 80;
+
+  static const double fadeStart = 0; // Start fading after title is gone
+  static const double fadeRange = 56; // Fade in over 56px
+  static const double maxBlur = 18.0;
+  static const int maxAlpha = 220;
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: Colors.transparent,
-      alignment: Alignment.center,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-        child: _GlassSearchBar(
-          hintText: 'Search Surah (Arabic or English)',
-          onChanged: onSearch,
+    // Only start fading in after the title header (56px) is gone
+    final double fade = ((shrinkOffset - fadeStart) / fadeRange).clamp(0.0, 1.0);
+    final int alpha = (maxAlpha * fade).toInt();
+    final double blur = maxBlur * fade;
+    return ClipRRect(
+      borderRadius: BorderRadius.zero,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        child: Container(
+          color: Colors.white.withAlpha(alpha),
+          alignment: Alignment.center,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8.0, 4.0, 8.0, 16.0), // extra bottom padding for tail
+            child: _GlassSearchBar(
+              hintText: 'Search Surah (Arabic or English)',
+              onChanged: onSearch,
+            ),
+          ),
         ),
       ),
     );
@@ -442,7 +466,7 @@ class _ToggleBtn extends StatelessWidget {
 
 class _QuranListenMode extends StatefulWidget {
   final ScrollController? scrollController;
-  const _QuranListenMode({super.key, this.scrollController});
+  const _QuranListenMode({this.scrollController});
 
   @override
   State<_QuranListenMode> createState() => _QuranListenModeState();
@@ -1115,7 +1139,7 @@ class _SurahCard extends StatelessWidget {
 class QuranPageView extends StatefulWidget {
   final int surah;
   final VoidCallback onClose;
-  const QuranPageView({required this.surah, required this.onClose});
+  const QuranPageView({super.key, required this.surah, required this.onClose});
 
   @override
   State<QuranPageView> createState() => _QuranPageViewState();

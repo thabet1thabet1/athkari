@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 
 class TasbeehCounterPage extends StatefulWidget {
+  const TasbeehCounterPage({super.key});
+
   @override
   State<TasbeehCounterPage> createState() => _TasbeehCounterPageState();
 }

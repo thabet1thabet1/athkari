@@ -4,6 +4,7 @@ import 'core/theme.dart';
 import 'ui/screens/athkar_screen.dart';
 import 'ui/screens/quran_screen.dart';
 import 'ui/screens/prayers_screen.dart';
+import 'ui/screens/qibla_screen.dart';
 import 'dart:ui';
 
 void main() {
@@ -127,7 +128,7 @@ class _MainScaffoldState extends State<MainScaffold> {
   static const double _hideDistance = 64.0; // nav bar height
   final ScrollController _scrollController = ScrollController();
   double _lastOffset = 0.0;
-  bool _isNavHidden = false;
+  final bool _isNavHidden = false;
 
   @override
   void initState() {
@@ -162,7 +163,7 @@ class _MainScaffoldState extends State<MainScaffold> {
       body: Stack(
         children: [
           // Custom background layer
-          const _AppBackground(),
+          const AppBackground(),
           // Main content
           // Pass the shared ScrollController to each screen
           MainScaffold._screenBuilders[navProvider.currentIndex](_scrollController),
@@ -218,8 +219,8 @@ class _MainScaffoldState extends State<MainScaffold> {
 }
 
 // Custom background widget with image background
-class _AppBackground extends StatelessWidget {
-  const _AppBackground();
+class AppBackground extends StatelessWidget {
+  const AppBackground({super.key});
 
   @override
   Widget build(BuildContext context) {

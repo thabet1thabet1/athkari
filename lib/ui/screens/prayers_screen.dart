@@ -10,6 +10,8 @@ import '../widgets/category_button.dart';
 import 'dart:ui';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hijri/hijri_calendar.dart';
+import '../../main.dart';
+import 'qibla_screen.dart';
 
 class PrayerTime {
   final String name;
@@ -414,6 +416,15 @@ class _PrayersScreenState extends State<PrayersScreen> {
     return Column(
       children: [
         AppBar(
+          leading: IconButton(
+            icon: Icon(Icons.explore_outlined, color: AppColors.forestGreen, size: 32),
+            padding: const EdgeInsets.only(left: 12.0, right: 4.0), // moves the icon, not the tap area
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const QiblaPage()),
+              );
+            },
+          ),
           title: Text('Prayers', style: GoogleFonts.poppins(color: AppColors.forestGreen, fontWeight: FontWeight.bold)),
           automaticallyImplyLeading: false,
           backgroundColor: Colors.transparent,
@@ -989,7 +1000,7 @@ class _QiyamMidnightDialogContentState extends State<_QiyamMidnightDialogContent
 
 class MonthlyPrayerCalendarPage extends StatefulWidget {
   final String city;
-  const MonthlyPrayerCalendarPage({Key? key, required this.city}) : super(key: key);
+  const MonthlyPrayerCalendarPage({super.key, required this.city});
 
   @override
   State<MonthlyPrayerCalendarPage> createState() => _MonthlyPrayerCalendarPageState();
@@ -1173,5 +1184,14 @@ class _MonthlyPrayerCalendarPageState extends State<MonthlyPrayerCalendarPage> {
                   ),
                 ),
     );
+  }
+}
+
+class QiblaPage extends StatelessWidget {
+  const QiblaPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const QiblaScreen();
   }
 } 
