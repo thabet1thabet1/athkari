@@ -77,9 +77,8 @@ class SwipableCard extends StatelessWidget {
                   Expanded(
                     child: Center(
                       child: Text(
-                        content,
-                        style: TextStyle(
-                          fontFamily: fontFamily,
+                        label.contains('Verse') ? '﴿ ' + content + ' ﴾' : content,
+                        style: GoogleFonts.amiri(
                           fontSize: 25,
                           color: textColor,
                           fontWeight: FontWeight.bold,

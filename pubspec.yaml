@@ -46,6 +46,7 @@ dependencies:
   flutter_launcher_icons: ^0.14.4
   http: ^1.2.1
   flutter_qiblah: ^3.0.3
+  just_audio: ^0.9.36
 
 dev_dependencies:
   flutter_test:
@@ -106,6 +107,7 @@ flutter:
     - assets/fonts/Amiri-Regular.ttf
     - lib/images/
     - assets/quran/quran-uthmani.json
+    - assets/quran/001 Surah Al-Fatiha Sheikh noreen muhammad sadiq.mp3
 
   fonts:
     - family: Amiri

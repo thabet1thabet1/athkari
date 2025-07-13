@@ -3,14 +3,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:adhan_dart/adhan_dart.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
 import '../../core/theme.dart';
-import '../../core/constants.dart';
+import '../../core/location_service.dart';
 import '../widgets/category_button.dart';
+import '../widgets/location_permission_dialog.dart';
 import 'dart:ui';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hijri/hijri_calendar.dart';
-import '../../main.dart';
+import '../../main.dart' hide AppBackground;
 import 'qibla_screen.dart';
 
 class PrayerTime {
@@ -43,10 +43,10 @@ class _PrayersScreenState extends State<PrayersScreen> {
   late final Ticker _ticker;
   // Add a mapping from prayer name to image asset
   final Map<String, String> _prayerImages = {
-    'Fajr': 'lib/images/8D16B5CB-AB41-46CF-8D32-6A8980E2C93A.JPEG',
+    'Fajr': 'lib/images/IMG_1290.JPG',
     'Dhuhr': 'lib/images/500640FA-FF23-4FBE-B72F-43E8DD396CBD.JPEG',
     'Asr': 'lib/images/IMG_1298.PNG',
-    'Maghrib': 'lib/images/IMG_1290.JPG',
+    'Maghrib': 'lib/images/8D16B5CB-AB41-46CF-8D32-6A8980E2C93A.JPEG',
     'Isha': 'lib/images/D1F96321-607E-4FCC-A79F-6E45365E1CF2.JPEG',
   };
 
@@ -67,66 +67,84 @@ class _PrayersScreenState extends State<PrayersScreen> {
     setState(() {
       _city = 'Loading...';
     });
+    
     try {
-      // Request location permission
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          setState(() {
-            _city = 'Location denied';
-          });
-          return;
+      // Try to get current location using the location service
+      final locationData = await LocationService.getCurrentLocation();
+      
+      if (locationData != null) {
+        _updatePrayerTimes(locationData['lat'], locationData['lng'], locationData['city']);
+      } else {
+        // If no location available, show permission dialog
+        if (mounted) {
+          _showLocationPermissionDialog();
         }
       }
-      if (permission == LocationPermission.deniedForever) {
-        setState(() {
-          _city = 'Location denied';
-        });
-        return;
-      }
-      // Get current position
-      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-      double lat = position.latitude;
-      double lng = position.longitude;
-      // Reverse geocode to get city name
-      List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
-      String city = placemarks.isNotEmpty ? (placemarks.first.locality ?? placemarks.first.subAdministrativeArea ?? placemarks.first.administrativeArea ?? 'Unknown') : 'Unknown';
-      // Calculate prayer times
-      final params = CalculationMethod.karachi();
-      params.madhab = Madhab.hanafi;
-      final date = DateTime.now();
-      final coordinates = Coordinates(lat, lng);
-      final prayerTimes = PrayerTimes(
-        coordinates: coordinates,
-        date: date,
-        calculationParameters: params,
-      );
-      setState(() {
-        _city = city;
-        _prayerTimes = [
-          if (prayerTimes.fajr != null)
-            PrayerTime(name: 'Fajr', icon: Icons.nightlight_round, time: prayerTimes.fajr!),
-          // if (prayerTimes.sunrise != null)
-          //   PrayerTime(name: 'Sunrise', icon: Icons.wb_sunny, time: prayerTimes.sunrise!),
-          if (prayerTimes.dhuhr != null)
-            PrayerTime(name: 'Dhuhr', icon: Icons.wb_sunny_outlined, time: prayerTimes.dhuhr!),
-          if (prayerTimes.asr != null)
-            PrayerTime(name: 'Asr', icon: Icons.wb_twilight, time: prayerTimes.asr!),
-          if (prayerTimes.maghrib != null)
-            PrayerTime(name: 'Maghrib', icon: Icons.nights_stay, time: prayerTimes.maghrib!),
-          if (prayerTimes.isha != null)
-            PrayerTime(name: 'Isha', icon: Icons.nightlight_round, time: prayerTimes.isha!),
-        ];
-        // Try to load manual offsets if present
-        _loadManualOffsets();
-        _updateNextPrayer();
-      });
     } catch (e) {
       setState(() {
         _city = 'Location error';
       });
     }
+  }
+
+  void _showLocationPermissionDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => LocationPermissionDialog(
+        title: 'Location Required',
+        message: 'To provide accurate prayer times for your location, we need access to your location.',
+        onAllow: () async {
+          Navigator.of(context).pop();
+          final locationData = await LocationService.getCurrentLocation(forceRequest: true);
+          if (locationData != null && mounted) {
+            _updatePrayerTimes(locationData['lat'], locationData['lng'], locationData['city']);
+          } else if (mounted) {
+            setState(() {
+              _city = 'Location denied';
+            });
+          }
+        },
+        onDeny: () {
+          Navigator.of(context).pop();
+          setState(() {
+            _city = 'Location denied';
+          });
+        },
+      ),
+    );
+  }
+
+  void _updatePrayerTimes(double lat, double lng, String city) {
+    // Calculate prayer times
+    final params = CalculationMethod.karachi();
+    params.madhab = Madhab.hanafi;
+    final date = DateTime.now();
+    final coordinates = Coordinates(lat, lng);
+    final prayerTimes = PrayerTimes(
+      coordinates: coordinates,
+      date: date,
+      calculationParameters: params,
+    );
+    
+    setState(() {
+      _city = city;
+      _prayerTimes = [
+        if (prayerTimes.fajr != null)
+          PrayerTime(name: 'Fajr', icon: Icons.nightlight_round, time: prayerTimes.fajr!),
+        if (prayerTimes.dhuhr != null)
+          PrayerTime(name: 'Dhuhr', icon: Icons.wb_sunny_outlined, time: prayerTimes.dhuhr!),
+        if (prayerTimes.asr != null)
+          PrayerTime(name: 'Asr', icon: Icons.wb_twilight, time: prayerTimes.asr!),
+        if (prayerTimes.maghrib != null)
+          PrayerTime(name: 'Maghrib', icon: Icons.nights_stay, time: prayerTimes.maghrib!),
+        if (prayerTimes.isha != null)
+          PrayerTime(name: 'Isha', icon: Icons.nightlight_round, time: prayerTimes.isha!),
+      ];
+      // Try to load manual offsets if present
+      _loadManualOffsets();
+      _updateNextPrayer();
+    });
   }
 
   Future<void> _loadManualOffsets() async {
@@ -1096,93 +1114,98 @@ class _MonthlyPrayerCalendarPageState extends State<MonthlyPrayerCalendarPage> {
   @override
   Widget build(BuildContext context) {
     final forestGreen = AppColors.forestGreen;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('$_hijriMonthName $_hijriYear', style: GoogleFonts.poppins(color: forestGreen, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: IconThemeData(color: forestGreen),
-        centerTitle: true,
-      ),
-      backgroundColor: Colors.white,
-      body: _loading
-          ? Center(child: CircularProgressIndicator())
-          : _error != null
-              ? Center(child: Text(_error!, style: TextStyle(color: Colors.red)))
-              : Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(32),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.32),
-                          borderRadius: BorderRadius.circular(32),
-                          boxShadow: [
-                            BoxShadow(
-                              color: forestGreen.withOpacity(0.10),
-                              blurRadius: 24,
-                              offset: Offset(0, 8),
+    return Stack(
+      children: [
+        const AppBackground(),
+        Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+            title: Text('$_hijriMonthName $_hijriYear', style: GoogleFonts.poppins(color: forestGreen, fontWeight: FontWeight.bold)),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            iconTheme: IconThemeData(color: forestGreen),
+            centerTitle: true,
+          ),
+          body: _loading
+              ? Center(child: CircularProgressIndicator())
+              : _error != null
+                  ? Center(child: Text(_error!, style: TextStyle(color: Colors.red)))
+                  : Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(32),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.32),
+                              borderRadius: BorderRadius.circular(32),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: forestGreen.withOpacity(0.10),
+                                  blurRadius: 24,
+                                  offset: Offset(0, 8),
+                                ),
+                              ],
+                              border: Border.all(color: forestGreen.withOpacity(0.13), width: 3.5),
                             ),
-                          ],
-                          border: Border.all(color: forestGreen.withOpacity(0.13), width: 3.5),
-                        ),
-                        child: ListView.builder(
-                          itemCount: _monthPrayerTimes!.length,
-                          itemBuilder: (context, idx) {
-                            final hijriDay = idx + 1;
-                            final prayers = _monthPrayerTimes![idx];
-                            final hijriDayObj = HijriCalendar()
-                              ..hYear = _hijriYear
-                              ..hMonth = _hijriMonth
-                              ..hDay = hijriDay;
-                            final gregorianDate = hijriDayObj.hijriToGregorian(_hijriYear, _hijriMonth, hijriDay);
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: forestGreen.withOpacity(0.08),
-                                  borderRadius: BorderRadius.circular(24),
-                                ),
-                                child: ExpansionTile(
-                                  title: Row(
-                                    children: [
-                                      Text(
-                                        'Day $hijriDay',
-                                        style: GoogleFonts.poppins(
-                                          color: forestGreen,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 18,
-                                        ),
+                            child: ListView.builder(
+                              itemCount: _monthPrayerTimes!.length,
+                              itemBuilder: (context, idx) {
+                                final hijriDay = idx + 1;
+                                final prayers = _monthPrayerTimes![idx];
+                                final hijriDayObj = HijriCalendar()
+                                  ..hYear = _hijriYear
+                                  ..hMonth = _hijriMonth
+                                  ..hDay = hijriDay;
+                                final gregorianDate = hijriDayObj.hijriToGregorian(_hijriYear, _hijriMonth, hijriDay);
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: forestGreen.withOpacity(0.08),
+                                      borderRadius: BorderRadius.circular(24),
+                                    ),
+                                    child: ExpansionTile(
+                                      title: Row(
+                                        children: [
+                                          Text(
+                                            'Day $hijriDay',
+                                            style: GoogleFonts.poppins(
+                                              color: forestGreen,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 18,
+                                            ),
+                                          ),
+                                          SizedBox(width: 12),
+                                          Text(
+                                            DateFormat('EEE, d MMM').format(gregorianDate),
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.black54,
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      SizedBox(width: 12),
-                                      Text(
-                                        DateFormat('EEE, d MMM').format(gregorianDate),
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.black54,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ],
+                                      children: prayers.map((pt) {
+                                        return ListTile(
+                                          leading: Icon(pt.icon, color: forestGreen),
+                                          title: Text(pt.name, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                                          trailing: Text(DateFormat('h:mm a').format(pt.time), style: GoogleFonts.poppins()),
+                                        );
+                                      }).toList(),
+                                    ),
                                   ),
-                                  children: prayers.map((pt) {
-                                    return ListTile(
-                                      leading: Icon(pt.icon, color: forestGreen),
-                                      title: Text(pt.name, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-                                      trailing: Text(DateFormat('h:mm a').format(pt.time), style: GoogleFonts.poppins()),
-                                    );
-                                  }).toList(),
-                                ),
-                              ),
-                            );
-                          },
+                                );
+                              },
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
+        ),
+      ],
     );
   }
 }

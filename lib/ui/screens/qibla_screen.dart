@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme.dart';
+import '../../core/location_service.dart';
+import '../widgets/location_permission_dialog.dart';
 import 'dart:math' as math;
 import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
 
 class QiblaScreen extends StatelessWidget {
   const QiblaScreen({super.key});
@@ -87,35 +88,26 @@ class _QiblaCompassBodyState extends State<QiblaCompassBody> with TickerProvider
 
   Future<void> _checkLocationPermission() async {
     try {
-      // Check if location services are enabled
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
+      // Try to get current location using the location service
+      final locationData = await LocationService.getCurrentLocation();
+      
+      if (locationData != null) {
+        // Calculate qibla direction
+        double qiblaDirection = await _calculateQiblaDirection(
+          locationData['lat'],
+          locationData['lng'],
+        );
+
         if (mounted) {
           setState(() {
-            _hasLocationPermission = false;
+            _hasLocationPermission = true;
             _isLoading = false;
+            _currentLocation = locationData['city'];
+            _qiblaDirection = qiblaDirection;
           });
-          _showLocationServicesDialog();
         }
-        return;
-      }
-
-      // Check location permission
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          if (mounted) {
-            setState(() {
-              _hasLocationPermission = false;
-              _isLoading = false;
-            });
-          }
-          return;
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
+      } else {
+        // If no location available, show permission dialog
         if (mounted) {
           setState(() {
             _hasLocationPermission = false;
@@ -123,41 +115,6 @@ class _QiblaCompassBodyState extends State<QiblaCompassBody> with TickerProvider
           });
           _showLocationPermissionDialog();
         }
-        return;
-      }
-
-      // Get current position
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      // Get location name
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-        position.latitude,
-        position.longitude,
-      );
-      
-      String locationName = placemarks.isNotEmpty 
-          ? (placemarks.first.locality ?? 
-             placemarks.first.subAdministrativeArea ?? 
-             placemarks.first.administrativeArea ?? 
-             'Unknown Location')
-          : 'Unknown Location';
-
-      // Calculate qibla direction
-      double qiblaDirection = await _calculateQiblaDirection(
-        position.latitude,
-        position.longitude,
-      );
-
-      if (mounted) {
-        setState(() {
-          _hasLocationPermission = true;
-          _isLoading = false;
-          _currentPosition = position;
-          _currentLocation = locationName;
-          _qiblaDirection = qiblaDirection;
-        });
       }
     } catch (e) {
       if (mounted) {
@@ -167,6 +124,45 @@ class _QiblaCompassBodyState extends State<QiblaCompassBody> with TickerProvider
         });
       }
     }
+  }
+
+  void _showLocationPermissionDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => LocationPermissionDialog(
+        title: 'Location Required',
+        message: 'To show the correct qibla direction, we need access to your current location.',
+        onAllow: () async {
+          Navigator.of(context).pop();
+          final locationData = await LocationService.getCurrentLocation(forceRequest: true);
+          if (locationData != null && mounted) {
+            double qiblaDirection = await _calculateQiblaDirection(
+              locationData['lat'],
+              locationData['lng'],
+            );
+            setState(() {
+              _hasLocationPermission = true;
+              _isLoading = false;
+              _currentLocation = locationData['city'];
+              _qiblaDirection = qiblaDirection;
+            });
+          } else if (mounted) {
+            setState(() {
+              _hasLocationPermission = false;
+              _isLoading = false;
+            });
+          }
+        },
+        onDeny: () {
+          Navigator.of(context).pop();
+          setState(() {
+            _hasLocationPermission = false;
+            _isLoading = false;
+          });
+        },
+      ),
+    );
   }
 
   Future<double> _calculateQiblaDirection(double latitude, double longitude) async {
@@ -248,38 +244,7 @@ class _QiblaCompassBodyState extends State<QiblaCompassBody> with TickerProvider
     );
   }
 
-  Future<void> _showLocationPermissionDialog() async {
-    return showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            'Location Permission Required',
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-              color: AppColors.forestGreen,
-            ),
-          ),
-          content: Text(
-            'Location permission is required to determine the Qibla direction. Please enable it in your device settings.',
-            style: GoogleFonts.poppins(),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'OK',
-                style: GoogleFonts.poppins(
-                  color: AppColors.forestGreen,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
+
 
   @override
   Widget build(BuildContext context) {

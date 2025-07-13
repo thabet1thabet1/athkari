@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/theme.dart';
+import 'core/location_service.dart';
 import 'ui/screens/athkar_screen.dart';
 import 'ui/screens/quran_screen.dart';
 import 'ui/screens/prayers_screen.dart';
-import 'ui/screens/qibla_screen.dart';
+import 'ui/widgets/location_permission_dialog.dart';
 import 'dart:ui';
+import 'package:just_audio/just_audio.dart';
+import 'ui/widgets/apple_music_player.dart';
 
 void main() {
   runApp(const MyApp());
@@ -49,6 +52,7 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  bool _locationChecked = false;
 
   @override
   void initState() {
@@ -61,27 +65,72 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOutCubic),
     );
 
-    // Start fade out after 3 seconds
-    Future.delayed(const Duration(seconds: 2), () {
+    _checkLocationPermission();
+  }
+
+  Future<void> _checkLocationPermission() async {
+    // Check if location permission was previously granted
+    bool wasGranted = await LocationService.wasLocationPermissionGranted();
+    
+    if (!wasGranted) {
+      // Show location permission dialog after a short delay
+      await Future.delayed(const Duration(seconds: 1));
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => const MainScaffold(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(
-                opacity: CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeInOutCubic,
-                ),
-                child: child,
-              );
-            },
-            transitionDuration: const Duration(milliseconds: 1500),
-          ),
-        );
-        _animationController.forward();
+        _showLocationPermissionDialog();
+        return;
       }
-    });
+    }
+    
+    _proceedToMainApp();
+  }
+
+  void _showLocationPermissionDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => LocationPermissionDialog(
+        title: 'Location Access',
+        message: 'This app needs location access to provide accurate prayer times and qibla direction for your current location.',
+        onAllow: () async {
+          Navigator.of(context).pop();
+          await LocationService.getCurrentLocation(forceRequest: true);
+          if (mounted) {
+            _proceedToMainApp();
+          }
+        },
+        onDeny: () {
+          Navigator.of(context).pop();
+          _proceedToMainApp();
+        },
+      ),
+    );
+  }
+
+  void _proceedToMainApp() {
+    if (!_locationChecked) {
+      _locationChecked = true;
+      // Start fade out after location check
+      Future.delayed(const Duration(seconds: 1), () {
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) => const MainScaffold(),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                return FadeTransition(
+                  opacity: CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeInOutCubic,
+                  ),
+                  child: child,
+                );
+              },
+              transitionDuration: const Duration(milliseconds: 1500),
+            ),
+          );
+          _animationController.forward();
+        }
+      });
+    }
   }
 
   @override
@@ -115,7 +164,7 @@ class MainScaffold extends StatefulWidget {
 
   static final List<Widget Function(ScrollController?)> _screenBuilders = [
     (controller) => AthkarScreen(scrollController: controller),
-    (controller) => QuranScreen(scrollController: controller),
+    (controller) => SizedBox.shrink(), // QuranScreen handled specially
     (controller) => PrayersScreen(scrollController: controller),
   ];
 
@@ -130,16 +179,34 @@ class _MainScaffoldState extends State<MainScaffold> {
   double _lastOffset = 0.0;
   final bool _isNavHidden = false;
 
+  // Audio player state
+  late AudioPlayer _audioPlayer;
+  bool _isPlaying = false;
+  bool _showAudioPlayer = false;
+  Duration? _duration;
+  Duration? _position;
+
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _audioPlayer = AudioPlayer();
+    _audioPlayer.positionStream.listen((pos) {
+      if (mounted) setState(() => _position = pos);
+    });
+    _audioPlayer.durationStream.listen((dur) {
+      if (mounted) setState(() => _duration = dur);
+    });
+    _audioPlayer.playerStateStream.listen((state) {
+      if (mounted) setState(() => _isPlaying = state.playing);
+    });
   }
 
   @override
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -155,6 +222,37 @@ class _MainScaffoldState extends State<MainScaffold> {
     _lastOffset = offset;
   }
 
+  Future<void> _playAlFatiha() async {
+    setState(() { _showAudioPlayer = true; });
+    try {
+      await _audioPlayer.setAsset('assets/quran/001 Surah Al-Fatiha Sheikh noreen muhammad sadiq.mp3');
+      await _audioPlayer.play();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error playing audio: $e')),
+        );
+      }
+    }
+  }
+
+  void _togglePlayPause() {
+    if (_isPlaying) {
+      _audioPlayer.pause();
+    } else {
+      _audioPlayer.play();
+    }
+  }
+
+  void _stopAudio() {
+    _audioPlayer.stop();
+    setState(() { _showAudioPlayer = false; });
+  }
+
+  void _seekAudio(double value) {
+    _audioPlayer.seek(Duration(seconds: value.toInt()));
+  }
+
   @override
   Widget build(BuildContext context) {
     final navProvider = Provider.of<BottomNavProvider>(context);
@@ -165,8 +263,22 @@ class _MainScaffoldState extends State<MainScaffold> {
           // Custom background layer
           const AppBackground(),
           // Main content
-          // Pass the shared ScrollController to each screen
-          MainScaffold._screenBuilders[navProvider.currentIndex](_scrollController),
+          // Pass the shared ScrollController and _slideValue to each screen
+          if (navProvider.currentIndex == 1)
+            QuranScreen(
+              scrollController: _scrollController,
+              slideValue: _slideValue,
+              showAudioPlayer: _showAudioPlayer,
+              isPlaying: _isPlaying,
+              duration: _duration,
+              position: _position,
+              onPlayAlFatiha: _playAlFatiha,
+              onPlayPause: _togglePlayPause,
+              onStopAudio: _stopAudio,
+              onSeekAudio: _seekAudio,
+            )
+          else
+            MainScaffold._screenBuilders[navProvider.currentIndex](_scrollController),
           // Glassy background behind nav bar (follows scroll, now taller and moved down)
           Positioned(
             left: 16,
@@ -195,6 +307,23 @@ class _MainScaffoldState extends State<MainScaffold> {
               ),
             ),
           ),
+          // Apple Music-style audio player (persistent)
+          if (_showAudioPlayer)
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 105 - (_slideValue * 89),
+              child: AppleMusicPlayer(
+                surahName: 'الفاتحة',
+                englishName: 'Al-Fatiha',
+                isPlaying: _isPlaying,
+                duration: _duration,
+                position: _position,
+                onPlayPause: _togglePlayPause,
+                onStop: _stopAudio,
+                onSeek: _seekAudio,
+              ),
+            ),
           // Floating Glassmorphic Bottom Bar (follows scroll)
           Positioned(
             left: 16,

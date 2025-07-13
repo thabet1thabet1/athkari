@@ -7,6 +7,11 @@ import '../../data/verses.dart';
 import '../widgets/category_button.dart';
 import 'package:islamicapp/ui/widgets/swipable_card.dart';
 import '../widgets/tasbeeh_counter_page.dart';
+import 'morning_athkar_screen.dart';
+import 'sleep_athkar_screen.dart';
+import 'waking_up_athkar_screen.dart';
+import 'after_prayer_duas_screen.dart';
+import 'evening_athkar_screen.dart';
 
 class AthkarScreen extends StatelessWidget {
   final ScrollController? scrollController;
@@ -112,24 +117,44 @@ class AthkarScreen extends StatelessWidget {
               ),
               const SizedBox(height: AppConstants.spacing16),
               // Category List
-              const CategoryButton(
+              CategoryButton(
                 icon: Icons.wb_sunny_outlined,
                 title: 'Morning Athkar',
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const MorningAthkarScreen()),
+                  );
+                },
               ),
               SizedBox(height: 8),
-              const CategoryButton(
+              CategoryButton(
                 icon: Icons.bed_outlined,
                 title: 'Sleep Athkar',
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const SleepAthkarScreen()),
+                  );
+                },
               ),
               SizedBox(height: 8),
-              const CategoryButton(
+              CategoryButton(
                 icon: Icons.wb_twilight,
                 title: 'Waking Up Athkar',
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const WakingUpAthkarScreen()),
+                  );
+                },
               ),
               SizedBox(height: 8),
-              const CategoryButton(
+              CategoryButton(
                 icon: Icons.self_improvement,
                 title: 'Duas After Prayer',
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const AfterPrayerDuasScreen()),
+                  );
+                },
               ),
               SizedBox(height: 8),
               CategoryButton(
@@ -142,9 +167,14 @@ class AthkarScreen extends StatelessWidget {
                 },
               ),
               SizedBox(height: 8),
-              const CategoryButton(
+              CategoryButton(
                 icon: Icons.nights_stay_outlined,
                 title: 'Evening Athkar',
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const EveningAthkarScreen()),
+                  );
+                },
               ),
               const SizedBox(height: 32),
             ],
