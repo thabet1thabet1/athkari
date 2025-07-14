@@ -13,12 +13,12 @@
 ## 📱 Screenshots
 
 <p align="center">
-  <img src="lib/screenshots/IMG_1452.jpg" alt="Screenshot 1" width="200"/>
-  <img src="lib/screenshots/IMG_1453.jpg" alt="Screenshot 2" width="200"/>
-  <img src="lib/screenshots/IMG_1454.jpg" alt="Screenshot 3" width="200"/>
-  <img src="lib/screenshots/IMG_1455.jpg" alt="Screenshot 4" width="200"/>
-  <img src="lib/screenshots/IMG_1456.jpg" alt="Screenshot 5" width="200"/>
-  <img src="lib/screenshots/IMG_1457.jpg" alt="Screenshot 6" width="200"/>
+  <img src="lib/screenshots/IMG_1452.jpg" alt="Screenshot 1" width="320"/>
+  <img src="lib/screenshots/IMG_1453.jpg" alt="Screenshot 2" width="320"/>
+  <img src="lib/screenshots/IMG_1454.jpg" alt="Screenshot 3" width="320"/>
+  <img src="lib/screenshots/IMG_1455.jpg" alt="Screenshot 4" width="320"/>
+  <img src="lib/screenshots/IMG_1456.jpg" alt="Screenshot 5" width="320"/>
+  <img src="lib/screenshots/IMG_1457.jpg" alt="Screenshot 6" width="320"/>
 </p>
 
 ---
