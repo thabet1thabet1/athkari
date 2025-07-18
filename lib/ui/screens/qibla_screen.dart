@@ -5,6 +5,7 @@ import '../../core/location_service.dart';
 import '../widgets/location_permission_dialog.dart';
 import 'dart:math' as math;
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter_qiblah/flutter_qiblah.dart';
 
 class QiblaScreen extends StatelessWidget {
   const QiblaScreen({super.key});
@@ -52,6 +53,7 @@ class _QiblaCompassBodyState extends State<QiblaCompassBody> with TickerProvider
   late Animation<double> _pulseAnimation;
 
   double _qiblaDirection = 0.0;
+  double _deviceDirection = 0.0;
   bool _isCalibrating = false;
   bool _hasLocationPermission = false;
   bool _isLoading = true;
@@ -74,6 +76,7 @@ class _QiblaCompassBodyState extends State<QiblaCompassBody> with TickerProvider
     ));
     _startPulseAnimation();
     _checkLocationPermission();
+    _startCompassListener();
   }
 
   void _startPulseAnimation() {
@@ -165,9 +168,14 @@ class _QiblaCompassBodyState extends State<QiblaCompassBody> with TickerProvider
     );
   }
 
+  void _startCompassListener() {
+    // For now, we'll use a simpler approach without the compass sensor
+    // The qibla direction will be calculated based on location only
+  }
+
   Future<double> _calculateQiblaDirection(double latitude, double longitude) async {
     try {
-      // Kaaba coordinates
+      // Manual calculation using the great circle formula
       const double kaabaLat = 21.4225;
       const double kaabaLng = 39.8262;
       
@@ -177,7 +185,7 @@ class _QiblaCompassBodyState extends State<QiblaCompassBody> with TickerProvider
       double lat2 = kaabaLat * math.pi / 180;
       double lng2 = kaabaLng * math.pi / 180;
       
-      // Calculate qibla direction
+      // Calculate qibla direction using the great circle formula
       double y = math.sin(lng2 - lng1) * math.cos(lat2);
       double x = math.cos(lat1) * math.sin(lat2) - 
                  math.sin(lat1) * math.cos(lat2) * math.cos(lng2 - lng1);
@@ -187,8 +195,11 @@ class _QiblaCompassBodyState extends State<QiblaCompassBody> with TickerProvider
       // Convert to 0-360 range
       qiblaDirection = (qiblaDirection + 360) % 360;
       
+      print('Qibla direction calculated: $qiblaDirection degrees for lat: $latitude, lng: $longitude');
+      
       return qiblaDirection;
     } catch (e) {
+      print('Error calculating qibla direction: $e');
       return 0.0;
     }
   }
@@ -359,8 +370,66 @@ class _QiblaCompassBodyState extends State<QiblaCompassBody> with TickerProvider
               ],
             ),
           ),
-          // const SizedBox(height: 20),
-          // _buildQiblaDirectionInfo(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQiblaIndicator() {
+    return Center(
+      child: Container(
+        width: 4,
+        height: 80,
+        decoration: BoxDecoration(
+          color: AppColors.forestGreen,
+          borderRadius: BorderRadius.circular(2),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQiblaDirectionInfo() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Text(
+            'Qibla Direction',
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppColors.forestGreen,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${_qiblaDirection.toStringAsFixed(1)}°',
+            style: GoogleFonts.poppins(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: AppColors.forestGreen,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Point your device towards the green arrow',
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: AppColors.darkGray,
+            ),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
@@ -459,6 +528,7 @@ class _QiblaCompassBodyState extends State<QiblaCompassBody> with TickerProvider
             children: [
               _buildCompassNeedle(),
               _buildDegreeMarkers(),
+              _buildQiblaIndicator(),
             ],
           ),
         ),

@@ -136,7 +136,7 @@ class _QuranScreenState extends State<QuranScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 0),
                     child: Column(
                       children: [
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 1),
                         Row(
                           children: [
                             if (_lastPageRead != null)
@@ -188,7 +188,7 @@ class _QuranScreenState extends State<QuranScreen> {
                 SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, idx) {
-                      final surah = surahs[idx];
+                      final surah = filteredSurahs[idx];
                       // Only show play button for Al-Fatiha (index 1)
                       final showPlayButton = surah['index'] == 1;
                       return Padding(
@@ -203,7 +203,7 @@ class _QuranScreenState extends State<QuranScreen> {
                         ),
                       );
                     },
-                    childCount: surahs.length,
+                    childCount: filteredSurahs.length,
                   ),
                 ),
             ],
@@ -351,13 +351,13 @@ class _QuranStickySearchDelegate extends SliverPersistentHeaderDelegate {
         child: Container(
           color: Colors.white.withAlpha(alpha),
           alignment: Alignment.center,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(8.0, 4.0, 8.0, 16.0), // extra bottom padding for tail
-            child: _GlassSearchBar(
-              hintText: 'Search Surah (Arabic or English)',
-              onChanged: onSearch,
+                      child: Padding(
+              padding: const EdgeInsets.fromLTRB(8.0, 4.0, 8.0, 8.0), // reduced bottom padding
+              child: _GlassSearchBar(
+                hintText: 'Search Surah (Arabic or English)',
+                onChanged: onSearch,
+              ),
             ),
-          ),
         ),
       ),
     );
@@ -1318,7 +1318,7 @@ class _QuranPageViewState extends State<QuranPageView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Stack(
           children: [
@@ -1328,18 +1328,29 @@ class _QuranPageViewState extends State<QuranPageView> {
                 children: [
                   SizedBox(height: 2),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.forestGreen),
                         onPressed: widget.onClose,
                       ),
-                      Text('Surah ${widget.surah}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 280),
+                          child: Text(
+                            'Surah ${widget.surah}', 
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.bold, 
+                              color: AppColors.forestGreen,
+                              fontSize: 18,
+                            )
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                   SizedBox(height: 2),
                   if (_loading)
-                    const Expanded(child: Center(child: CircularProgressIndicator())),
+                    const Expanded(child: Center(child: CircularProgressIndicator(color: AppColors.forestGreen))),
                   if (_error != null)
                     Expanded(child: Center(child: Text(_error!, style: const TextStyle(color: Colors.red)))),
                   if (!_loading && _error == null && _ayahs != null)
@@ -1351,23 +1362,60 @@ class _QuranPageViewState extends State<QuranPageView> {
                             // Decorative Surah Name Banner
                             if (_surahNameArabic != null)
                               Container(
-                                margin: const EdgeInsets.only(top: 0, bottom: 0),
+                                margin: const EdgeInsets.only(top: 0, bottom: 20),
                                 child: Stack(
                                   alignment: Alignment.center,
                                   children: [
-                                    Image.asset(
-                                      'lib/images/image-removebg-preview.png',
-                                      height: 250,
-                                      fit: BoxFit.contain,
-                                    ),
-                                    Text(
-                                      _surahNameArabic!,
-                                      style: GoogleFonts.amiri(
-                                        fontSize: 32,
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.bold,
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(1),
+                                      child: Image.asset('lib/images/surah_banner.png',
+                                        
+                                        width: double.infinity,
+                                        height: 75,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          print('Error loading surah banner: $error');
+                                          return Container(
+                                            width: double.infinity,
+                                            height: 150,
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                colors: [
+                                                  AppColors.forestGreen.withOpacity(0.1),
+                                                  AppColors.forestGreen.withOpacity(0.2),
+                                                  AppColors.forestGreen.withOpacity(0.1),
+                                                ],
+                                                begin: Alignment.topLeft,
+                                                end: Alignment.bottomRight,
+                                              ),
+                                              borderRadius: BorderRadius.circular(0),
+                                              border: Border.all(
+                                                color: AppColors.forestGreen.withOpacity(0.3),
+                                                width: 2,
+                                              ),
+                                            ),
+                                          );
+                                        },
                                       ),
-                                      textAlign: TextAlign.center,
+                                    ),
+                                    Positioned(
+                                      top: 24 ,
+                                      child: Text(
+                                        _surahNameArabic!,
+                                        style: GoogleFonts.amiri(
+                                          fontSize: 28,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.bold,
+                                          shadows: [
+                                            Shadow(
+                                              offset: Offset(1, 1),
+                                              blurRadius: 2,
+                                              color: Colors.white.withOpacity(0.8),
+                                            ),
+                                          ],
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -1378,7 +1426,7 @@ class _QuranPageViewState extends State<QuranPageView> {
                                 padding: const EdgeInsets.only(top: 0, bottom: 0),
                                 child: Text(
                                   _centeredBasmala!,
-                                  style: GoogleFonts.amiri(fontWeight: FontWeight.bold, fontSize: 24, color: Colors.white),
+                                  style: GoogleFonts.amiri(fontWeight: FontWeight.bold, fontSize: 24, color: Colors.black),
                                   textAlign: TextAlign.center,
                                 ),
                               ),
@@ -1392,7 +1440,7 @@ class _QuranPageViewState extends State<QuranPageView> {
                                 style: GoogleFonts.amiri(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 28,
-                                  color: Colors.white,
+                                  color: Colors.black,
                                   height: 2.1,
                                 ),
                               ),

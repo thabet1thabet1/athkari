@@ -83,18 +83,29 @@ class LocationService {
         desiredAccuracy: LocationAccuracy.high,
       );
 
-      // Reverse geocode to get city name
+      // Reverse geocode to get city name with better accuracy
       List<Placemark> placemarks = await placemarkFromCoordinates(
         position.latitude, 
         position.longitude
       );
       
-      String city = placemarks.isNotEmpty 
-          ? (placemarks.first.locality ?? 
-             placemarks.first.subAdministrativeArea ?? 
-             placemarks.first.administrativeArea ?? 
-             'Unknown')
-          : 'Unknown';
+      String city = 'Unknown';
+      if (placemarks.isNotEmpty) {
+        final placemark = placemarks.first;
+        // Try to get the most specific city name available
+        city = placemark.locality ?? 
+               placemark.subLocality ?? 
+               placemark.subAdministrativeArea ?? 
+               placemark.administrativeArea ?? 
+               'Unknown';
+        
+        // Add country for better identification if city is generic
+        if (placemark.country != null && 
+            (city == 'Unknown' || city.length < 3 || 
+             city.toLowerCase() == placemark.country!.toLowerCase())) {
+          city = '${placemark.locality ?? placemark.subAdministrativeArea ?? placemark.administrativeArea ?? 'Unknown'}, ${placemark.country}';
+        }
+      }
 
       // Save the location
       await saveLastKnownLocation(city, position.latitude, position.longitude);

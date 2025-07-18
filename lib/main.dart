@@ -5,10 +5,12 @@ import 'core/location_service.dart';
 import 'ui/screens/athkar_screen.dart';
 import 'ui/screens/quran_screen.dart';
 import 'ui/screens/prayers_screen.dart';
+import 'ui/screens/welcome_screen.dart';
 import 'ui/widgets/location_permission_dialog.dart';
 import 'dart:ui';
 import 'package:just_audio/just_audio.dart';
 import 'ui/widgets/apple_music_player.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
@@ -53,6 +55,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   bool _locationChecked = false;
+  bool _isFirstTime = true;
 
   @override
   void initState() {
@@ -65,7 +68,27 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOutCubic),
     );
 
-    _checkLocationPermission();
+    _checkFirstTimeAndLocation();
+  }
+
+  Future<void> _checkFirstTimeAndLocation() async {
+    // Check if this is the first time
+    final prefs = await SharedPreferences.getInstance();
+    _isFirstTime = prefs.getBool('has_seen_welcome') != true;
+    
+    // Check if location permission was previously granted
+    bool wasGranted = await LocationService.wasLocationPermissionGranted();
+    
+    if (!wasGranted) {
+      // Show location permission dialog after a short delay
+      await Future.delayed(const Duration(seconds: 1));
+      if (mounted) {
+        _showLocationPermissionDialog();
+        return;
+      }
+    }
+    
+    _proceedToMainApp();
   }
 
   Future<void> _checkLocationPermission() async {
@@ -112,21 +135,66 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       // Start fade out after location check
       Future.delayed(const Duration(seconds: 1), () {
         if (mounted) {
-          Navigator.of(context).pushReplacement(
-            PageRouteBuilder(
-              pageBuilder: (context, animation, secondaryAnimation) => const MainScaffold(),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                return FadeTransition(
-                  opacity: CurvedAnimation(
-                    parent: animation,
-                    curve: Curves.easeInOutCubic,
-                  ),
-                  child: child,
-                );
-              },
-              transitionDuration: const Duration(milliseconds: 1500),
-            ),
-          );
+          if (_isFirstTime) {
+            // Show welcome screen for first-time users
+            Navigator.of(context).pushReplacement(
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) => WelcomeScreen(
+                  onContinue: () async {
+                    // Mark that user has seen welcome screen
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool('has_seen_welcome', true);
+                    
+                    // Navigate to main app
+                    if (mounted) {
+                      Navigator.of(context).pushReplacement(
+                        PageRouteBuilder(
+                          pageBuilder: (context, animation, secondaryAnimation) => const MainScaffold(),
+                          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                            return FadeTransition(
+                              opacity: CurvedAnimation(
+                                parent: animation,
+                                curve: Curves.easeInOutCubic,
+                              ),
+                              child: child,
+                            );
+                          },
+                          transitionDuration: const Duration(milliseconds: 800),
+                        ),
+                      );
+                    }
+                  },
+                ),
+                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(
+                    opacity: CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.easeInOutCubic,
+                    ),
+                    child: child,
+                  );
+                },
+                transitionDuration: const Duration(milliseconds: 1500),
+              ),
+            );
+          } else {
+            // Go directly to main app for returning users
+            Navigator.of(context).pushReplacement(
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) => const MainScaffold(),
+                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(
+                    opacity: CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.easeInOutCubic,
+                    ),
+                    child: child,
+                  );
+                },
+                transitionDuration: const Duration(milliseconds: 1500),
+              ),
+            );
+          }
           _animationController.forward();
         }
       });

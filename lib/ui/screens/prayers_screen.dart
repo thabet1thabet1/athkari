@@ -10,8 +10,12 @@ import '../widgets/location_permission_dialog.dart';
 import 'dart:ui';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hijri/hijri_calendar.dart';
-import '../../main.dart' hide AppBackground;
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
 import 'qibla_screen.dart';
+
+
 
 class PrayerTime {
   final String name;
@@ -43,10 +47,10 @@ class _PrayersScreenState extends State<PrayersScreen> {
   late final Ticker _ticker;
   // Add a mapping from prayer name to image asset
   final Map<String, String> _prayerImages = {
-    'Fajr': 'lib/images/IMG_1290.JPG',
-    'Dhuhr': 'lib/images/500640FA-FF23-4FBE-B72F-43E8DD396CBD.JPEG',
+    'Fajr': 'lib/images/500640FA-FF23-4FBE-B72F-43E8DD396CBD.JPEG',
+    'Dhuhr': 'lib/images/8D16B5CB-AB41-46CF-8D32-6A8980E2C93A.JPEG',
     'Asr': 'lib/images/IMG_1298.PNG',
-    'Maghrib': 'lib/images/8D16B5CB-AB41-46CF-8D32-6A8980E2C93A.JPEG',
+    'Maghrib':'lib/images/IMG_1290.JPG' ,
     'Isha': 'lib/images/D1F96321-607E-4FCC-A79F-6E45365E1CF2.JPEG',
   };
 
@@ -115,37 +119,107 @@ class _PrayersScreenState extends State<PrayersScreen> {
     );
   }
 
-  void _updatePrayerTimes(double lat, double lng, String city) {
-    // Calculate prayer times
-    final params = CalculationMethod.karachi();
-    params.madhab = Madhab.hanafi;
-    final date = DateTime.now();
-    final coordinates = Coordinates(lat, lng);
-    final prayerTimes = PrayerTimes(
-      coordinates: coordinates,
-      date: date,
-      calculationParameters: params,
-    );
+  Future<void> _updatePrayerTimes(double lat, double lng, String city) async {
+    // Get prayer times from reliable API
+    try {
+      final apiPrayerTimes = await _fetchPrayerTimesFromAPI(lat, lng);
+      if (apiPrayerTimes != null && apiPrayerTimes.isNotEmpty) {
+        setState(() {
+          _city = city;
+          _prayerTimes = apiPrayerTimes;
+          _loadManualOffsets();
+          _updateNextPrayer();
+        });
+        return;
+      }
+    } catch (e) {
+      print('API prayer times failed: $e');
+    }
     
+    // If API fails, show error state
     setState(() {
       _city = city;
-      _prayerTimes = [
-        if (prayerTimes.fajr != null)
-          PrayerTime(name: 'Fajr', icon: Icons.nightlight_round, time: prayerTimes.fajr!),
-        if (prayerTimes.dhuhr != null)
-          PrayerTime(name: 'Dhuhr', icon: Icons.wb_sunny_outlined, time: prayerTimes.dhuhr!),
-        if (prayerTimes.asr != null)
-          PrayerTime(name: 'Asr', icon: Icons.wb_twilight, time: prayerTimes.asr!),
-        if (prayerTimes.maghrib != null)
-          PrayerTime(name: 'Maghrib', icon: Icons.nights_stay, time: prayerTimes.maghrib!),
-        if (prayerTimes.isha != null)
-          PrayerTime(name: 'Isha', icon: Icons.nightlight_round, time: prayerTimes.isha!),
-      ];
-      // Try to load manual offsets if present
-      _loadManualOffsets();
-      _updateNextPrayer();
+      _prayerTimes = [];
+      _nextPrayerName = 'Error';
+      _nextPrayerTime = null;
+      _timeLeft = Duration.zero;
     });
   }
+
+  Future<List<PrayerTime>?> _fetchPrayerTimesFromAPI(double lat, double lng) async {
+    try {
+      final date = DateTime.now();
+      final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      
+      // Use Aladhan API with method 2 (same as Google)
+      final url = 'http://api.aladhan.com/v1/timings/$dateStr?latitude=$lat&longitude=$lng&method=2';
+      final response = await http.get(Uri.parse(url));
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final timings = data['data']['timings'];
+        
+        print('Aladhan API Response: $timings');
+        
+        // The API returns times in the location's local time
+        // We need to create DateTime objects that represent the correct local time
+        return [
+          if (timings['Fajr'] != null)
+            PrayerTime(
+              name: 'Fajr', 
+              icon: Icons.nightlight_round, 
+              time: _parseTimeString(timings['Fajr'])
+            ),
+          if (timings['Dhuhr'] != null)
+            PrayerTime(
+              name: 'Dhuhr', 
+              icon: Icons.wb_sunny_outlined, 
+              time: _parseTimeString(timings['Dhuhr'])
+            ),
+          if (timings['Asr'] != null)
+            PrayerTime(
+              name: 'Asr', 
+              icon: Icons.wb_twilight, 
+              time: _parseTimeString(timings['Asr'])
+            ),
+          if (timings['Maghrib'] != null)
+            PrayerTime(
+              name: 'Maghrib', 
+              icon: Icons.nights_stay, 
+              time: _parseTimeString(timings['Maghrib'])
+            ),
+          if (timings['Isha'] != null)
+            PrayerTime(
+              name: 'Isha', 
+              icon: Icons.nightlight_round, 
+              time: _parseTimeString(timings['Isha'])
+            ),
+        ];
+      }
+    } catch (e) {
+      print('Error fetching prayer times from API: $e');
+    }
+    return null;
+  }
+
+  DateTime _parseTimeString(String timeStr) {
+    final now = DateTime.now();
+    final parts = timeStr.split(':');
+    final hour = int.parse(parts[0]);
+    final minute = int.parse(parts[1]);
+    
+    // Create time in local timezone
+    // The API returns times in the location's local time, so we create a DateTime
+    // that represents that time in the user's current timezone
+    final localTime = DateTime(now.year, now.month, now.day, hour, minute);
+    
+    // Debug: Print the parsed time
+    print('Parsed time: $timeStr -> ${localTime.toString()}');
+    
+    return localTime;
+  }
+
+
 
   Future<void> _loadManualOffsets() async {
     final prefs = await SharedPreferences.getInstance();
@@ -204,15 +278,13 @@ class _PrayersScreenState extends State<PrayersScreen> {
     });
   }
 
-  void _showCityPicker() async {
+  Future<void> _showCityPicker() async {
     final List<Map<String, Object>> cityData = [
+      // North African Cities
+      {'name': 'Algiers', 'lat': 36.7538, 'lng': 3.0588},
+      {'name': 'Casablanca', 'lat': 33.5731, 'lng': -7.5898},
+      {'name': 'Tunis', 'lat': 36.8065, 'lng': 10.1815},
       {'name': 'Cairo', 'lat': 30.0444, 'lng': 31.2357},
-      {'name': 'Riyadh', 'lat': 24.7136, 'lng': 46.6753},
-      {'name': 'Istanbul', 'lat': 41.0082, 'lng': 28.9784},
-      {'name': 'Jakarta', 'lat': -6.2088, 'lng': 106.8456},
-      {'name': 'London', 'lat': 51.5074, 'lng': -0.1278},
-      {'name': 'New York', 'lat': 40.7128, 'lng': -74.0060},
-      {'name': 'Kuala Lumpur', 'lat': 3.139, 'lng': 101.6869},
       {'name': 'Barika', 'lat': 35.3894, 'lng': 5.3658},
     ];
     final selected = await showDialog<Map<String, dynamic>>(
@@ -240,38 +312,13 @@ class _PrayersScreenState extends State<PrayersScreen> {
       final name = selected['name'] as String;
       final lat = (selected['lat'] as num).toDouble();
       final lng = (selected['lng'] as num).toDouble();
-      _setManualLocation(name, lat, lng);
+      await _setManualLocation(name, lat, lng);
     }
   }
 
-  void _setManualLocation(String city, double lat, double lng) {
-    final params = CalculationMethod.karachi();
-    params.madhab = Madhab.hanafi;
-    final date = DateTime.now();
-    final coordinates = Coordinates(lat, lng);
-    final prayerTimes = PrayerTimes(
-      coordinates: coordinates,
-      date: date,
-      calculationParameters: params,
-    );
-    setState(() {
-      _city = city;
-      _prayerTimes = [
-        if (prayerTimes.fajr != null)
-          PrayerTime(name: 'Fajr', icon: Icons.nightlight_round, time: prayerTimes.fajr!),
-        // if (prayerTimes.sunrise != null)
-        //   PrayerTime(name: 'Sunrise', icon: Icons.wb_sunny, time: prayerTimes.sunrise!),
-        if (prayerTimes.dhuhr != null)
-          PrayerTime(name: 'Dhuhr', icon: Icons.wb_sunny_outlined, time: prayerTimes.dhuhr!),
-        if (prayerTimes.asr != null)
-          PrayerTime(name: 'Asr', icon: Icons.wb_twilight, time: prayerTimes.asr!),
-        if (prayerTimes.maghrib != null)
-          PrayerTime(name: 'Maghrib', icon: Icons.nights_stay, time: prayerTimes.maghrib!),
-        if (prayerTimes.isha != null)
-          PrayerTime(name: 'Isha', icon: Icons.nightlight_rounded, time: prayerTimes.isha!),
-      ];
-      _updateNextPrayer();
-    });
+  Future<void> _setManualLocation(String city, double lat, double lng) async {
+    // Use the same improved calculation logic as _updatePrayerTimes
+    await _updatePrayerTimes(lat, lng, city);
   }
 
   void _showManualSettingsDialog() {
@@ -626,7 +673,7 @@ class _PrayersScreenState extends State<PrayersScreen> {
                           ),
                           const SizedBox(width: 6),
                           GestureDetector(
-                            onTap: _showCityPicker,
+                            onTap: () => _showCityPicker(),
                             child: Icon(Icons.add_circle_outline, color: forestGreen, size: 22),
                           ),
                         ],
@@ -1061,28 +1108,38 @@ class _MonthlyPrayerCalendarPageState extends State<MonthlyPrayerCalendarPage> {
       List<List<PrayerTime>> monthTimes = [];
       for (int i = 0; i < daysInMonth; i++) {
         DateTime day = firstDay.add(Duration(days: i));
-        final params = CalculationMethod.karachi();
-        params.madhab = Madhab.hanafi;
-        final coordinates = Coordinates(lat, lng);
-        final prayerTimes = PrayerTimes(
-          coordinates: coordinates,
-          date: day,
-          calculationParameters: params,
-        );
-        monthTimes.add([
-          if (prayerTimes.fajr != null)
-            PrayerTime(name: 'Fajr', icon: Icons.nightlight_round, time: prayerTimes.fajr!),
-          if (prayerTimes.sunrise != null)
-            PrayerTime(name: 'Sunrise', icon: Icons.wb_sunny, time: prayerTimes.sunrise!),
-          if (prayerTimes.dhuhr != null)
-            PrayerTime(name: 'Dhuhr', icon: Icons.wb_sunny_outlined, time: prayerTimes.dhuhr!),
-          if (prayerTimes.asr != null)
-            PrayerTime(name: 'Asr', icon: Icons.wb_twilight, time: prayerTimes.asr!),
-          if (prayerTimes.maghrib != null)
-            PrayerTime(name: 'Maghrib', icon: Icons.nights_stay, time: prayerTimes.maghrib!),
-          if (prayerTimes.isha != null)
-            PrayerTime(name: 'Isha', icon: Icons.nightlight_round, time: prayerTimes.isha!),
-        ]);
+        
+        // Use API for each day with method 2 (matches Google)
+        final dayStr = '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
+        final url = 'http://api.aladhan.com/v1/timings/$dayStr?latitude=$lat&longitude=$lng&method=2';
+        
+        try {
+          final response = await http.get(Uri.parse(url));
+          if (response.statusCode == 200) {
+            final data = json.decode(response.body);
+            final timings = data['data']['timings'];
+            
+            monthTimes.add([
+              if (timings['Fajr'] != null)
+                PrayerTime(name: 'Fajr', icon: Icons.nightlight_round, time: _parseTimeStringForCalendar(timings['Fajr'], day)),
+              if (timings['Sunrise'] != null)
+                PrayerTime(name: 'Sunrise', icon: Icons.wb_sunny, time: _parseTimeStringForCalendar(timings['Sunrise'], day)),
+              if (timings['Dhuhr'] != null)
+                PrayerTime(name: 'Dhuhr', icon: Icons.wb_sunny_outlined, time: _parseTimeStringForCalendar(timings['Dhuhr'], day)),
+              if (timings['Asr'] != null)
+                PrayerTime(name: 'Asr', icon: Icons.wb_twilight, time: _parseTimeStringForCalendar(timings['Asr'], day)),
+              if (timings['Maghrib'] != null)
+                PrayerTime(name: 'Maghrib', icon: Icons.nights_stay, time: _parseTimeStringForCalendar(timings['Maghrib'], day)),
+              if (timings['Isha'] != null)
+                PrayerTime(name: 'Isha', icon: Icons.nightlight_round, time: _parseTimeStringForCalendar(timings['Isha'], day)),
+            ]);
+          } else {
+            monthTimes.add([]);
+          }
+        } catch (e) {
+          print('Error fetching prayer times for day $dayStr: $e');
+          monthTimes.add([]);
+        }
       }
       setState(() {
         _monthPrayerTimes = monthTimes;
@@ -1109,6 +1166,14 @@ class _MonthlyPrayerCalendarPageState extends State<MonthlyPrayerCalendarPage> {
       }
       setState(() { _error = 'Failed to load calendar: $e'; _loading = false; });
     }
+  }
+
+  DateTime _parseTimeStringForCalendar(String timeStr, DateTime day) {
+    final parts = timeStr.split(':');
+    final hour = int.parse(parts[0]);
+    final minute = int.parse(parts[1]);
+    
+    return DateTime(day.year, day.month, day.day, hour, minute);
   }
 
   @override
