@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../../main.dart' as main_app show AppBackground;
 
 import 'qibla_screen.dart';
 
@@ -58,7 +59,7 @@ class _PrayersScreenState extends State<PrayersScreen> {
   void initState() {
     super.initState();
     _initLocationAndPrayerTimes();
-    _ticker = Ticker(_updateCountdown)..start();
+    _ticker = Ticker(_updateCountdown, mountedCheck: () => mounted)..start();
   }
 
   @override
@@ -68,9 +69,11 @@ class _PrayersScreenState extends State<PrayersScreen> {
   }
 
   void _initLocationAndPrayerTimes() async {
-    setState(() {
-      _city = 'Loading...';
-    });
+    if (mounted) {
+      setState(() {
+        _city = 'Loading...';
+      });
+    }
     
     try {
       // Try to get current location using the location service
@@ -85,9 +88,11 @@ class _PrayersScreenState extends State<PrayersScreen> {
         }
       }
     } catch (e) {
-      setState(() {
-        _city = 'Location error';
-      });
+      if (mounted) {
+        setState(() {
+          _city = 'Location error';
+        });
+      }
     }
   }
 
@@ -111,9 +116,11 @@ class _PrayersScreenState extends State<PrayersScreen> {
         },
         onDeny: () {
           Navigator.of(context).pop();
-          setState(() {
-            _city = 'Location denied';
-          });
+          if (mounted) {
+            setState(() {
+              _city = 'Location denied';
+            });
+          }
         },
       ),
     );
@@ -124,12 +131,14 @@ class _PrayersScreenState extends State<PrayersScreen> {
     try {
       final apiPrayerTimes = await _fetchPrayerTimesFromAPI(lat, lng);
       if (apiPrayerTimes != null && apiPrayerTimes.isNotEmpty) {
-        setState(() {
-          _city = city;
-          _prayerTimes = apiPrayerTimes;
-          _loadManualOffsets();
-          _updateNextPrayer();
-        });
+        if (mounted) {
+          setState(() {
+            _city = city;
+            _prayerTimes = apiPrayerTimes;
+            _loadManualOffsets();
+            _updateNextPrayer();
+          });
+        }
         return;
       }
     } catch (e) {
@@ -137,13 +146,15 @@ class _PrayersScreenState extends State<PrayersScreen> {
     }
     
     // If API fails, show error state
-    setState(() {
-      _city = city;
-      _prayerTimes = [];
-      _nextPrayerName = 'Error';
-      _nextPrayerTime = null;
-      _timeLeft = Duration.zero;
-    });
+    if (mounted) {
+      setState(() {
+        _city = city;
+        _prayerTimes = [];
+        _nextPrayerName = 'Error';
+        _nextPrayerTime = null;
+        _timeLeft = Duration.zero;
+      });
+    }
   }
 
   Future<List<PrayerTime>?> _fetchPrayerTimesFromAPI(double lat, double lng) async {
@@ -225,9 +236,11 @@ class _PrayersScreenState extends State<PrayersScreen> {
     final prefs = await SharedPreferences.getInstance();
     final offsets = List<int>.generate(_prayerTimes.length, (i) => prefs.getInt('prayer_offset_$i') ?? 0);
     final touched = offsets.any((o) => o != 0);
-    setState(() {
-      _manualOffsets = touched ? offsets : null;
-    });
+    if (mounted) {
+      setState(() {
+        _manualOffsets = touched ? offsets : null;
+      });
+    }
   }
 
   DateTime getEffectivePrayerTime(int idx) {
@@ -246,7 +259,9 @@ class _PrayersScreenState extends State<PrayersScreen> {
         _nextPrayerName = pt.name;
         _nextPrayerTime = effectiveTime;
         _timeLeft = effectiveTime.difference(now);
-        setState(() {});
+        if (mounted) {
+          setState(() {});
+        }
         return;
       }
     }
@@ -256,11 +271,13 @@ class _PrayersScreenState extends State<PrayersScreen> {
     _nextPrayerName = _prayerTimes.first.name;
     _nextPrayerTime = tomorrowFajr;
     _timeLeft = tomorrowFajr.difference(now);
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   void _updateCountdown(Duration _) {
-    if (_nextPrayerTime != null) {
+    if (_nextPrayerTime != null && mounted) {
       final now = DateTime.now();
       setState(() {
         _timeLeft = _nextPrayerTime!.difference(now);
@@ -272,10 +289,12 @@ class _PrayersScreenState extends State<PrayersScreen> {
   }
 
   void _toggleNotification(int idx) {
-    setState(() {
-      _prayerTimes[idx].notificationEnabled = !_prayerTimes[idx].notificationEnabled;
-      // TODO: Schedule/cancel notification using flutter_local_notifications
-    });
+    if (mounted) {
+      setState(() {
+        _prayerTimes[idx].notificationEnabled = !_prayerTimes[idx].notificationEnabled;
+        // TODO: Schedule/cancel notification using flutter_local_notifications
+      });
+    }
   }
 
   Future<void> _showCityPicker() async {
@@ -885,26 +904,39 @@ class _ActionPillButton extends StatelessWidget {
 // Ticker for live countdown
 class Ticker {
   final void Function(Duration) onTick;
+  final bool Function()? mountedCheck;
   late final Stopwatch _stopwatch;
   late final Duration _interval;
   bool _running = false;
-  Ticker(this.onTick, {Duration interval = const Duration(seconds: 1)}) {
+  
+  Ticker(this.onTick, {Duration interval = const Duration(seconds: 1), this.mountedCheck}) {
     _interval = interval;
     _stopwatch = Stopwatch();
   }
+  
   void start() {
     if (_running) return;
     _running = true;
     _stopwatch.start();
     _tick();
   }
+  
   void _tick() async {
     while (_running) {
       await Future.delayed(_interval);
       if (!_running) break;
-      onTick(_stopwatch.elapsed);
+      
+      // Check if widget is still mounted before calling onTick
+      if (mountedCheck == null || mountedCheck!()) {
+        onTick(_stopwatch.elapsed);
+      } else {
+        // Widget is no longer mounted, stop the ticker
+        _running = false;
+        break;
+      }
     }
   }
+  
   void dispose() {
     _running = false;
     _stopwatch.stop();
@@ -1092,7 +1124,9 @@ class _MonthlyPrayerCalendarPageState extends State<MonthlyPrayerCalendarPage> {
   }
 
   Future<void> _fetchMonthlyPrayerTimes() async {
-    setState(() { _loading = true; _error = null; });
+    if (mounted) {
+      setState(() { _loading = true; _error = null; });
+    }
     try {
       // Get location (reuse logic from PrayersScreen)
       Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
@@ -1141,30 +1175,36 @@ class _MonthlyPrayerCalendarPageState extends State<MonthlyPrayerCalendarPage> {
           monthTimes.add([]);
         }
       }
-      setState(() {
-        _monthPrayerTimes = monthTimes;
-        _loading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _monthPrayerTimes = monthTimes;
+          _loading = false;
+        });
+      }
     } catch (e) {
       final errorMsg = e.toString();
       if (errorMsg.contains('denied')) {
-        await showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text('Location Permission Needed'),
-            content: Text('To show the monthly prayer calendar, please enable location permissions in your device settings.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text('OK'),
-              ),
-            ],
-          ),
-        );
-        if (mounted) Navigator.of(context).pop();
+        if (mounted) {
+          await showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text('Location Permission Needed'),
+              content: Text('To show the monthly prayer calendar, please enable location permissions in your device settings.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('OK'),
+                ),
+              ],
+            ),
+          );
+          if (mounted) Navigator.of(context).pop();
+        }
         return;
       }
-      setState(() { _error = 'Failed to load calendar: $e'; _loading = false; });
+      if (mounted) {
+        setState(() { _error = 'Failed to load calendar: $e'; _loading = false; });
+      }
     }
   }
 
@@ -1181,7 +1221,7 @@ class _MonthlyPrayerCalendarPageState extends State<MonthlyPrayerCalendarPage> {
     final forestGreen = AppColors.forestGreen;
     return Stack(
       children: [
-        const AppBackground(),
+        const main_app.AppBackground(),
         Scaffold(
           backgroundColor: Colors.transparent,
           appBar: AppBar(
