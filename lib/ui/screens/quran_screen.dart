@@ -752,6 +752,11 @@ class _SurahListenCard extends StatelessWidget {
     this.onPlay,
   });
 
+  void _onDownloadTap() {
+    // TODO: Implement download functionality
+    print('Download tapped for Surah $index');
+  }
+
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
@@ -803,6 +808,26 @@ class _SurahListenCard extends StatelessWidget {
                 IconButton(
                   icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill, color: AppColors.forestGreen, size: 36),
                   onPressed: onPlay,
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.only(right: 2.0),
+                  child: IconButton(
+                    icon: Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: AppColors.forestGreen,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.download,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                    onPressed: _onDownloadTap,
+                  ),
                 ),
             ],
           ),

@@ -24,9 +24,9 @@ class AthkarScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final weekday = DateTime.now().weekday;
-    final verse = versesOfTheDay[(weekday - 1) % versesOfTheDay.length];
-    final dua = palestineDuas[(weekday - 1) % palestineDuas.length];
+    // Use daily system instead of weekday
+    final verse = getDailyVerse();
+    final dua = getDailyPalestineDua();
     return Column(
       children: [
         AppBar(

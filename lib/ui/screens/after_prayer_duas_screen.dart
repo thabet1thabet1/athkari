@@ -17,9 +17,9 @@ class _AfterPrayerDuasScreenState extends State<AfterPrayerDuasScreen> {
 
   final List<Map<String, dynamic>> afterPrayerDuas = [
     {
-      'arabic': 'أستغفر الله، أستغفر الله، أستغفر الله',
-      'translation': 'I seek forgiveness from Allah (three times).',
-      'count': 1,
+      'arabic': 'أستغفر الله',
+      'translation': 'I seek forgiveness from Allah.',
+      'count': 3,
     },
     {
       'arabic': 'اللهم أنت السلام ومنك السلام تباركت يا ذا الجلال والإكرام',
@@ -32,8 +32,23 @@ class _AfterPrayerDuasScreenState extends State<AfterPrayerDuasScreen> {
       'count': 1,
     },
     {
-      'arabic': 'سبحان الله (33 مرة)، الحمد لله (33 مرة)، الله أكبر (33 مرة)، لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير',
-      'translation': 'Glory be to Allah (33 times), Praise be to Allah (33 times), Allah is the Greatest (33 times), There is no god but Allah alone, with no partner. His is the dominion and His is the praise and He is able to do all things.',
+      'arabic': 'سبحان الله',
+      'translation': 'Glory be to Allah.',
+      'count': 33,
+    },
+    {
+      'arabic': 'الحمد لله',
+      'translation': 'Praise be to Allah.',
+      'count': 33,
+    },
+    {
+      'arabic': 'الله أكبر',
+      'translation': 'Allah is the Greatest.',
+      'count': 33,
+    },
+    {
+      'arabic': 'لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير',
+      'translation': 'There is no god but Allah alone, with no partner. His is the dominion and His is the praise and He is able to do all things.',
       'count': 1,
     },
     {
@@ -56,11 +71,26 @@ class _AfterPrayerDuasScreenState extends State<AfterPrayerDuasScreen> {
     } else {
       showCupertinoDialog(
         context: context,
+        barrierDismissible: true,
         builder: (context) => CupertinoAlertDialog(
-          title: Text('Well done!', style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold)),
+          title: Text(
+            'Well done! 🎉',
+            style: GoogleFonts.poppins(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
           content: Padding(
-            padding: const EdgeInsets.only(top: 12.0),
-            child: Text('You have completed the After Prayer Duas', style: GoogleFonts.poppins(fontSize: 18)),
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Text(
+              'You have completed the After Prayer Duas',
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                color: Colors.black54,
+                height: 1.4,
+              ),
+            ),
           ),
           actions: [
             CupertinoDialogAction(
@@ -68,7 +98,14 @@ class _AfterPrayerDuasScreenState extends State<AfterPrayerDuasScreen> {
                 Navigator.of(context).pop();
                 Navigator.of(context).pop();
               },
-              child: Text('Done', style: GoogleFonts.poppins(fontSize: 16, color: AppColors.forestGreen)),
+              child: Text(
+                'Done',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.forestGreen,
+                ),
+              ),
             ),
           ],
         ),
@@ -132,10 +169,11 @@ class _AfterPrayerDuasScreenState extends State<AfterPrayerDuasScreen> {
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(AppConstants.spacing24),
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          return SingleChildScrollView(
+                      child: IntrinsicHeight(
+                        child: Center(
+                          child: SingleChildScrollView(
                             child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
@@ -161,8 +199,8 @@ class _AfterPrayerDuasScreenState extends State<AfterPrayerDuasScreen> {
                                 ),
                               ],
                             ),
-                          );
-                        },
+                          ),
+                        ),
                       ),
                     ),
                   ),

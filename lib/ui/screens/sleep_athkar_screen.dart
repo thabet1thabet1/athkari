@@ -61,11 +61,26 @@ class _SleepAthkarScreenState extends State<SleepAthkarScreen> {
     } else {
       showCupertinoDialog(
         context: context,
+        barrierDismissible: true,
         builder: (context) => CupertinoAlertDialog(
-          title: Text('Well done!', style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold)),
+          title: Text(
+            'Well done! 🎉',
+            style: GoogleFonts.poppins(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
           content: Padding(
-            padding: const EdgeInsets.only(top: 12.0),
-            child: Text('You have completed the Sleep Athkar', style: GoogleFonts.poppins(fontSize: 18)),
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Text(
+              'You have completed the Sleep Athkar',
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                color: Colors.black54,
+                height: 1.4,
+              ),
+            ),
           ),
           actions: [
             CupertinoDialogAction(
@@ -73,7 +88,14 @@ class _SleepAthkarScreenState extends State<SleepAthkarScreen> {
                 Navigator.of(context).pop();
                 Navigator.of(context).pop();
               },
-              child: Text('Done', style: GoogleFonts.poppins(fontSize: 16, color: AppColors.forestGreen)),
+              child: Text(
+                'Done',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.forestGreen,
+                ),
+              ),
             ),
           ],
         ),
@@ -137,32 +159,38 @@ class _SleepAthkarScreenState extends State<SleepAthkarScreen> {
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(AppConstants.spacing24),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            currentAthkar['arabic'],
-                            style: GoogleFonts.amiri(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.forestGreen,
-                              height: 1.8,
+                      child: IntrinsicHeight(
+                        child: Center(
+                          child: SingleChildScrollView(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  currentAthkar['arabic'],
+                                  style: GoogleFonts.amiri(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.forestGreen,
+                                    height: 1.8,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  textDirection: TextDirection.rtl,
+                                ),
+                                SizedBox(height: AppConstants.spacing16),
+                                Text(
+                                  currentAthkar['translation'],
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16,
+                                    color: Colors.grey[600],
+                                    height: 1.5,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
                             ),
-                            textAlign: TextAlign.center,
-                            textDirection: TextDirection.rtl,
                           ),
-                          SizedBox(height: AppConstants.spacing16),
-                          Text(
-                            currentAthkar['translation'],
-                            style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                              height: 1.5,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),

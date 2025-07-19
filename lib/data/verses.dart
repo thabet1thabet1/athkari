@@ -1,64 +1,162 @@
+// Daily verses that change at midnight (based on day of year)
 const List<Map<String, String>> versesOfTheDay = [
   {
     'verse': 'فَاذْكُرُونِي أَذْكُرْكُمْ وَاشْكُرُوا لِي وَلَا تَكْفُرُونِ',
     'source': 'Surah Al-Baqarah, 152',
   },
   {
-    'verse': 'الَّذِينَ آمَنُوا وَتَطْمَئِنُّ قُلُوبُهُم بِذِكْرِ اللَّهِ',
-    'source': 'Surah Ar-Ra’d, 28',
+    'verse': 'الَّذِينَ آمَنُوا وَتَطْمَئِنُّ قُلُوبُهُم بِذِكْرِ اللَّهِ',
+    'source': 'Surah Ar-Ra\'d, 28',
   },
   {
-    'verse': 'وَاذْكُر رَّبَّكَ كَثِيرًا وَسَبِّحْ بِالْعَشِيِّ وَالْإِبْكَارِ',
+    'verse': 'وَاذْكُر رَّبَّكَ كَثِيرًا وَسَبِّحْ بِالْعَشِيِّ وَالْإِبْكَارِ',
     'source': 'Surah Al-Imran, 41',
   },
   {
-    'verse': 'فَسَبِّحْ بِاسْمِ رَبِّكَ الْعَظِيمِ',
-    'source': 'Surah Al-Waqi’ah, 74',
+    'verse': 'فَسَبِّحْ بِاسْمِ رَبِّكَ الْعَظِيمِ',
+    'source': 'Surah Al-Waqi\'ah, 74',
   },
   {
-    'verse': 'إِنَّمَا الْمُؤْمِنُونَ الَّذِينَ إِذَا ذُكِرَ اللَّهُ وَجِلَتْ قُلُوبُهُمْ',
+    'verse': 'إِنَّمَا الْمُؤْمِنُونَ الَّذِينَ إِذَا ذُكِرَ اللَّهُ وَجِلَتْ قُلُوبُهُمْ',
     'source': 'Surah Al-Anfal, 2',
   },
   {
-    'verse': 'وَسَبِّحْهُ بُكْرَةً وَأَصِيلًا',
+    'verse': 'وَسَبِّحْهُ بُكْرَةً وَأَصِيلًا',
     'source': 'Surah Al-Furqan, 58',
   },
   {
-    'verse': 'فَسَبِّحْ بِحَمْدِ رَبِّكَ وَاسْتَغْفِرْهُ',
+    'verse': 'فَسَبِّحْ بِحَمْدِ رَبِّكَ وَاسْتَغْفِرْهُ',
     'source': 'Surah An-Nasr, 3',
+  },
+  // Additional 10 verses
+  {
+    'verse': 'إِنَّ اللَّهَ مَعَ الصَّابِرِينَ',
+    'source': 'Surah Al-Baqarah, 153',
+  },
+  {
+    'verse': 'وَمَن يَتَوَكَّلْ عَلَى اللَّهِ فَهُوَ حَسْبُهُ',
+    'source': 'Surah At-Talaq, 3',
+  },
+  {
+    'verse': 'إِنَّ اللَّهَ لَا يُغَيِّرُ مَا بِقَوْمٍ حَتَّىٰ يُغَيِّرُوا مَا بِأَنفُسِهِمْ',
+    'source': 'Surah Ar-Ra\'d, 11',
+  },
+  {
+    'verse': 'وَلَا تَيْأَسُوا مِن رَّوْحِ اللَّهِ',
+    'source': 'Surah Yusuf, 87',
+  },
+  {
+    'verse': 'إِنَّ اللَّهَ يُحِبُّ الْمُحْسِنِينَ',
+    'source': 'Surah Al-Baqarah, 195',
+  },
+  {
+    'verse': 'وَمَن يَتَّقِ اللَّهَ يَجْعَل لَّهُ مَخْرَجًا',
+    'source': 'Surah At-Talaq, 2',
+  },
+  {
+    'verse': 'إِنَّ اللَّهَ لَا يُضِيعُ أَجْرَ الْمُحْسِنِينَ',
+    'source': 'Surah At-Tawbah, 120',
+  },
+  {
+    'verse': 'وَلَا تَقُولُوا لِمَن يُقْتَلُ فِي سَبِيلِ اللَّهِ أَمْوَاتٌ',
+    'source': 'Surah Al-Baqarah, 154',
+  },
+  {
+    'verse': 'إِنَّ اللَّهَ مَعَنَا',
+    'source': 'Surah At-Tawbah, 40',
+  },
+  {
+    'verse': 'وَمَن يَتَّقِ اللَّهَ يَجْعَل لَّهُ مِنْ أَمْرِهِ يُسْرًا',
+    'source': 'Surah At-Talaq, 4',
   },
 ];
 
+// Palestine duas that change daily
 const List<Map<String, String>> palestineDuas = [
   {
-    'dua': 'اللهم كن لإخواننا في فلسطين ناصرًا ومعينًا، وحافظًا وظهيرًا.',
-    'source': 'General',
+    'dua': 'اللَّهُمَّ انْصُرْ أَهْلَ فِلَسْطِينَ وَاحْفَظْهُمْ مِنْ كُلِّ سُوءٍ',
+    'source': 'Dua for Palestine',
   },
   {
-    'dua': 'اللهم احفظ أهل فلسطين من كل سوء، وارفع عنهم البلاء والظلم.',
-    'source': 'General',
+    'dua': 'اللَّهُمَّ اكْشِفْ الْغُمَّةَ عَنْ أَهْلِ فِلَسْطِينَ وَأَصْلِحْ أَحْوَالَهُمْ',
+    'source': 'Dua for Palestine',
   },
   {
-    'dua': 'اللهم فرج كربهم، واشفِ جرحاهم، وارحم شهداءهم، وثبت أقدامهم.',
-    'source': 'General',
+    'dua': 'اللَّهُمَّ ارْحَمْ أَهْلَ فِلَسْطِينَ وَاجْعَلْ لَهُمْ فَرَجًا قَرِيبًا',
+    'source': 'Dua for Palestine',
   },
   {
-    'dua': 'اللهم ارزقهم الأمن والأمان، والسلامة والإيمان، والنصر على من عاداهم.',
-    'source': 'General',
+    'dua': 'اللَّهُمَّ احْفَظْ أَطْفَالَ فِلَسْطِينَ وَاحْرُسْهُمْ بِعَيْنِكَ الَّتِي لَا تَنَامُ',
+    'source': 'Dua for Palestine',
   },
   {
-    'dua': 'اللهم اجبر كسرهم، وداوِ جراحهم، وكن لهم عونًا ونصيرًا.',
-    'source': 'General',
+    'dua': 'اللَّهُمَّ أَصْلِحْ أَحْوَالَ الْمُسْلِمِينَ فِي فِلَسْطِينَ وَفِي كُلِّ مَكَانٍ',
+    'source': 'Dua for Palestine',
   },
   {
-    'dua': 'اللهم أبدل خوفهم أمنًا، وحزنهم فرحًا، وذلهم عزًا.',
-    'source': 'General',
+    'dua': 'اللَّهُمَّ انْصُرْ الْمُسْتَضْعَفِينَ فِي فِلَسْطِينَ وَفِي كُلِّ أَرْضٍ',
+    'source': 'Dua for Palestine',
   },
   {
-    'dua': 'اللهم عليك بالظالمين، فإنهم لا يعجزونك، وانصر المستضعفين في فلسطين.',
-    'source': 'General',
+    'dua': 'اللَّهُمَّ اكْشِفْ الْبَلَاءَ عَنْ أَهْلِ فِلَسْطِينَ وَاجْعَلْ لَهُمْ نُصْرَةً مِنْ عِنْدِكَ',
+    'source': 'Dua for Palestine',
+  },
+  // Additional 10 duas for Palestine
+  {
+    'dua': 'اللَّهُمَّ احْفَظْ الْمَسَاجِدَ فِي فِلَسْطِينَ وَاجْعَلْهَا مَأْمَنًا لِلْمُؤْمِنِينَ',
+    'source': 'Dua for Palestine',
+  },
+  {
+    'dua': 'اللَّهُمَّ ارْزُقْ أَهْلَ فِلَسْطِينَ الصَّبْرَ وَالثَّبَاتَ وَالْإِيمَانَ',
+    'source': 'Dua for Palestine',
+  },
+  {
+    'dua': 'اللَّهُمَّ اكْشِفْ الْحِجَابَ عَنْ أَهْلِ فِلَسْطِينَ وَأَرِهِمْ نُورَ الْحَقِّ',
+    'source': 'Dua for Palestine',
+  },
+  {
+    'dua': 'اللَّهُمَّ احْفَظْ الْعُلَمَاءَ وَالطُّلَّابَ فِي فِلَسْطِينَ وَاجْعَلْهُمْ حُجَّةً عَلَى الظَّالِمِينَ',
+    'source': 'Dua for Palestine',
+  },
+  {
+    'dua': 'اللَّهُمَّ انْصُرْ الْمُقَاوِمِينَ فِي فِلَسْطِينَ وَاجْعَلْهُمْ ظَاهِرِينَ عَلَى عَدُوِّهِمْ',
+    'source': 'Dua for Palestine',
+  },
+  {
+    'dua': 'اللَّهُمَّ اكْشِفْ الْغُمَّةَ عَنْ أَهْلِ الْقُدْسِ وَاحْفَظْ الْمَسْجِدَ الْأَقْصَى',
+    'source': 'Dua for Palestine',
+  },
+  {
+    'dua': 'اللَّهُمَّ ارْحَمْ الشُّهَدَاءَ فِي فِلَسْطِينَ وَاجْعَلْهُمْ مِنَ السَّابِقِينَ إِلَى الْجَنَّةِ',
+    'source': 'Dua for Palestine',
+  },
+  {
+    'dua': 'اللَّهُمَّ أَصْلِحْ أَحْوَالَ الْمُسْلِمِينَ فِي كُلِّ مَكَانٍ وَاجْعَلْهُمْ أُمَّةً وَاحِدَةً',
+    'source': 'Dua for Palestine',
+  },
+  {
+    'dua': 'اللَّهُمَّ اكْشِفْ الْبَلَاءَ عَنْ جَمِيعِ الْمُسْلِمِينَ وَاجْعَلْ لَهُمُ النَّصْرَ وَالْفَتْحَ',
+    'source': 'Dua for Palestine',
+  },
+  {
+    'dua': 'اللَّهُمَّ احْفَظْ أَرْضَ فِلَسْطِينَ وَاجْعَلْهَا أَرْضَ الْإِسْلَامِ وَالْإِيمَانِ',
+    'source': 'Dua for Palestine',
   },
 ];
+
+// Function to get daily verse based on day of year (changes at midnight)
+Map<String, String> getDailyVerse() {
+  final now = DateTime.now();
+  final dayOfYear = now.difference(DateTime(now.year, 1, 1)).inDays;
+  return versesOfTheDay[dayOfYear % versesOfTheDay.length];
+}
+
+// Function to get daily dua for Palestine based on day of year (changes at midnight)
+Map<String, String> getDailyPalestineDua() {
+  final now = DateTime.now();
+  final dayOfYear = now.difference(DateTime(now.year, 1, 1)).inDays;
+  return palestineDuas[dayOfYear % palestineDuas.length];
+}
 
 /// List of all surahs with Arabic name, English name, and page number
 const List<Map<String, dynamic>> surahs = [

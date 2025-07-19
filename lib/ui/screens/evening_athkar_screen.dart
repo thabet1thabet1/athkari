@@ -61,11 +61,26 @@ class _EveningAthkarScreenState extends State<EveningAthkarScreen> {
     } else {
       showCupertinoDialog(
         context: context,
+        barrierDismissible: true,
         builder: (context) => CupertinoAlertDialog(
-          title: Text('Well done!', style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold)),
+          title: Text(
+            'Well done! 🎉',
+            style: GoogleFonts.poppins(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
           content: Padding(
-            padding: const EdgeInsets.only(top: 12.0),
-            child: Text('You have completed the Evening Athkar', style: GoogleFonts.poppins(fontSize: 18)),
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Text(
+              'You have completed the Evening Athkar',
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                color: Colors.black54,
+                height: 1.4,
+              ),
+            ),
           ),
           actions: [
             CupertinoDialogAction(
@@ -73,7 +88,14 @@ class _EveningAthkarScreenState extends State<EveningAthkarScreen> {
                 Navigator.of(context).pop();
                 Navigator.of(context).pop();
               },
-              child: Text('Done', style: GoogleFonts.poppins(fontSize: 16, color: AppColors.forestGreen)),
+              child: Text(
+                'Done',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.forestGreen,
+                ),
+              ),
             ),
           ],
         ),
@@ -137,10 +159,11 @@ class _EveningAthkarScreenState extends State<EveningAthkarScreen> {
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(AppConstants.spacing24),
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          return SingleChildScrollView(
+                      child: IntrinsicHeight(
+                        child: Center(
+                          child: SingleChildScrollView(
                             child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
@@ -166,8 +189,8 @@ class _EveningAthkarScreenState extends State<EveningAthkarScreen> {
                                 ),
                               ],
                             ),
-                          );
-                        },
+                          ),
+                        ),
                       ),
                     ),
                   ),
