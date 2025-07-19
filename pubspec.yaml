@@ -113,9 +113,9 @@ flutter:
     - family: Amiri
       fonts:
         - asset: assets/fonts/Amiri-Regular.ttf
-    - family: KFGQPCUthmanicScript
+    - family: UthmanicHafs
       fonts:
-        - asset: assets/fonts/KFGQPC-Uthmanic-Script.ttf
+        - asset: assets/fonts/KFGQPC Uthmanic Script HAFS Regular.otf
 
 # Flutter Launcher Icons configuration
 flutter_launcher_icons:

@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:just_audio/just_audio.dart';
 import '../../ui/widgets/apple_music_player.dart';
+import 'package:flutter/widgets.dart';
 
 class QuranScreen extends StatefulWidget {
   final ScrollController? scrollController;
@@ -1317,143 +1318,241 @@ class _QuranPageViewState extends State<QuranPageView> {
 
   @override
   Widget build(BuildContext context) {
+    // Remove the first 4 words from the first ayah for all surahs except Al-Fatiha (1) and At-Tawbah (9)
+    List<dynamic>? displayAyahs = _ayahs == null ? null : _ayahs!.map((e) => Map<String, dynamic>.from(e)).toList();
+    if (displayAyahs != null && widget.surah != 1 && widget.surah != 9 && displayAyahs.isNotEmpty) {
+      final String firstAyahText = displayAyahs[0]['text'] ?? '';
+      final words = firstAyahText.trim().split(RegExp(r'\s+'));
+      if (words.length > 4) {
+        displayAyahs[0]['text'] = words.sublist(4).join(' ').trimLeft();
+      }
+    }
+    // Remove Quranic stop signs (waqf symbols) from ayah text
+    final waqfRegex = RegExp(r'[۞۩۝ۚۛۗۖۙۘۜ۝۞ۣ۟۠ۡۢۤۥۦۧۨ۩۪ۭ۫۬ۮۯ۰۱۲۳۴۵۶۷۸۹ۺۻۼ۽۾ۿ]');
+    if (displayAyahs != null) {
+      for (var ayah in displayAyahs) {
+        if (ayah['text'] != null) {
+          ayah['text'] = (ayah['text'] as String).replaceAll(waqfRegex, '');
+        }
+      }
+    }
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFFFAF5),
       body: SafeArea(
         child: Stack(
           children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 8, right: 8, top: 0, bottom: 0),
-              child: Column(
-                children: [
-                  SizedBox(height: 2),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.forestGreen),
-                        onPressed: widget.onClose,
-                      ),
+            Container(
+              color: const Color(0xFFFFFAF5),
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8, right: 8, top: 0, bottom: 0),
+                child: Column(
+                  children: [
+                    SizedBox(height: 2),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.forestGreen),
+                          onPressed: widget.onClose,
+                        ),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 280),
+                            child: Text(
+                              'Surah ${widget.surah}', 
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.bold, 
+                                color: AppColors.forestGreen,
+                                fontSize: 18,
+                              )
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 2),
+                    if (_loading)
+                      const Expanded(child: Center(child: CircularProgressIndicator(color: AppColors.forestGreen))),
+                    if (_error != null)
+                      Expanded(child: Center(child: Text(_error!, style: const TextStyle(color: Colors.red)))),
+                    if (!_loading && _error == null && _ayahs != null)
                       Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 280),
-                          child: Text(
-                            'Surah ${widget.surah}', 
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.bold, 
-                              color: AppColors.forestGreen,
-                              fontSize: 18,
-                            )
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // Decorative Surah Name Banner
+                              if (_surahNameArabic != null)
+                                Container(
+                                  margin: const EdgeInsets.only(top: 0, bottom: 20),
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(1),
+                                        child: Image.asset('lib/images/surah_banner.png',
+                                          
+                                          width: double.infinity,
+                                          height: 75,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) {
+                                            print('Error loading surah banner: $error');
+                                            return Container(
+                                              width: double.infinity,
+                                              height: 150,
+                                              decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                  colors: [
+                                                    AppColors.forestGreen.withOpacity(0.1),
+                                                    AppColors.forestGreen.withOpacity(0.2),
+                                                    AppColors.forestGreen.withOpacity(0.1),
+                                                  ],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                ),
+                                                borderRadius: BorderRadius.circular(0),
+                                                border: Border.all(
+                                                  color: AppColors.forestGreen.withOpacity(0.3),
+                                                  width: 2,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                      Positioned(
+                                        top: 20 ,
+                                        child: Text(
+                                          _surahNameArabic!,
+                                          style: const TextStyle(
+                                            fontFamily: 'UthmanicHafs',
+                                            fontSize: 29,
+                                            color: Color(0xFF171616),
+                                            fontWeight: FontWeight.normal,
+                                            shadows: [
+                                              Shadow(
+                                                offset: Offset(1, 1),
+                                                blurRadius: 2,
+                                                color: Color.fromARGB(255, 255, 255, 255),
+                                              ),
+                                            ],
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              // Centered Basmala symbol (﷽)
+                              if (widget.surah != 1 && widget.surah != 9) ...[
+                                const SizedBox(height: 0),
+                                Center(
+                                  child: Text(
+                                    '﷽',
+                                    style: GoogleFonts.amiri(
+                                      fontSize: 34,
+                                      color: Color(0xFF171616),
+                                      fontWeight: FontWeight.normal,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                              ],
+                              // Centered Basmala if present
+                              if (_centeredBasmala != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 0, bottom: 0),
+                                  child: Text(
+                                    _centeredBasmala!,
+                                    style: GoogleFonts.amiri(fontWeight: FontWeight.bold, fontSize: 24, color: const Color(0xFF171616)),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              // Block Quran Text
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                                child: displayAyahs == null
+                                    ? SizedBox.shrink()
+                                    : Directionality(
+                                        textDirection: TextDirection.rtl,
+                                        child: RichText(
+                                          textAlign: TextAlign.center,
+                                          text: TextSpan(
+                                            style: const TextStyle(
+                                              fontFamily: 'UthmanicHafs',
+                                              fontWeight: FontWeight.normal,
+                                              fontSize: 28,
+                                              color: Color(0xFF171616),
+                                              height: 2.1,
+                                            ),
+                                            children: [
+                                              for (int i = 0; i < displayAyahs.length; i++) ...[
+                                                TextSpan(text: displayAyahs[i]['text'] + ' '),
+                                                WidgetSpan(
+                                                  alignment: PlaceholderAlignment.middle,
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 2.5),
+                                                    child: _AyahSeparatorWidget(ayahNumber: displayAyahs[i]['numberInSurah']),
+                                                  ),
+                                                ),
+                                                const TextSpan(text: ' '),
+                                              ],
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                  SizedBox(height: 2),
-                  if (_loading)
-                    const Expanded(child: Center(child: CircularProgressIndicator(color: AppColors.forestGreen))),
-                  if (_error != null)
-                    Expanded(child: Center(child: Text(_error!, style: const TextStyle(color: Colors.red)))),
-                  if (!_loading && _error == null && _ayahs != null)
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            // Decorative Surah Name Banner
-                            if (_surahNameArabic != null)
-                              Container(
-                                margin: const EdgeInsets.only(top: 0, bottom: 20),
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(1),
-                                      child: Image.asset('lib/images/surah_banner.png',
-                                        
-                                        width: double.infinity,
-                                        height: 75,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          print('Error loading surah banner: $error');
-                                          return Container(
-                                            width: double.infinity,
-                                            height: 150,
-                                            decoration: BoxDecoration(
-                                              gradient: LinearGradient(
-                                                colors: [
-                                                  AppColors.forestGreen.withOpacity(0.1),
-                                                  AppColors.forestGreen.withOpacity(0.2),
-                                                  AppColors.forestGreen.withOpacity(0.1),
-                                                ],
-                                                begin: Alignment.topLeft,
-                                                end: Alignment.bottomRight,
-                                              ),
-                                              borderRadius: BorderRadius.circular(0),
-                                              border: Border.all(
-                                                color: AppColors.forestGreen.withOpacity(0.3),
-                                                width: 2,
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                    Positioned(
-                                      top: 24 ,
-                                      child: Text(
-                                        _surahNameArabic!,
-                                        style: GoogleFonts.amiri(
-                                          fontSize: 28,
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.bold,
-                                          shadows: [
-                                            Shadow(
-                                              offset: Offset(1, 1),
-                                              blurRadius: 2,
-                                              color: Colors.white.withOpacity(0.8),
-                                            ),
-                                          ],
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            // Centered Basmala if present
-                            if (_centeredBasmala != null)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 0, bottom: 0),
-                                child: Text(
-                                  _centeredBasmala!,
-                                  style: GoogleFonts.amiri(fontWeight: FontWeight.bold, fontSize: 24, color: Colors.black),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            // Block Quran Text
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                              child: SelectableText(
-                                _blockQuranText,
-                                textDirection: TextDirection.rtl,
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.amiri(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 28,
-                                  color: Colors.black,
-                                  height: 2.1,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _AyahSeparatorWidget extends StatelessWidget {
+  final int ayahNumber;
+  const _AyahSeparatorWidget({required this.ayahNumber});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 38,
+      height: 38,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Image.asset(
+            'lib/images/ayah_seperator.png',
+            width: 38,
+            height: 38,
+            fit: BoxFit.contain,
+          ),
+          Positioned(
+            child: Text(
+              '$ayahNumber',
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF18824B),
+                fontSize: 12,
+                shadows: [
+                  Shadow(
+                    color: Colors.white,
+                    blurRadius: 2,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
