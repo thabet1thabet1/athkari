@@ -82,7 +82,7 @@ class SwipableCard extends StatelessWidget {
                           fontFamily: fontFamily,
                           fontSize: 28,
                           color: textColor,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.normal,
                           height: 1.5,
                           shadows: const [
                             Shadow(

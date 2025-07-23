@@ -37,8 +37,8 @@ dependencies:
   provider: ^6.1.5
   hijri: ^3.0.0
   google_fonts: ^6.2.1
-  adhan_dart: ^1.1.2
-  geolocator: ^11.0.0
+  adhan_dart: ^2.0.0
+  geolocator: ^10.0.0
   flutter_local_notifications: ^17.1.2
   intl: ^0.19.0
   geocoding: ^2.2.0
@@ -47,6 +47,10 @@ dependencies:
   http: ^1.2.1
   flutter_qiblah: ^3.0.3
   just_audio: ^0.9.36
+  url_launcher: ^6.2.5
+  dio: ^5.4.3
+  path_provider: ^2.1.2
+  permission_handler: ^11.3.1
 
 dev_dependencies:
   flutter_test:

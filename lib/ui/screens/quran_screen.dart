@@ -9,7 +9,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:just_audio/just_audio.dart';
 import '../../ui/widgets/apple_music_player.dart';
-import 'package:flutter/widgets.dart';
+import '../../core/quran_download_service.dart';
+import '../../core/audio_manager.dart';
 
 class QuranScreen extends StatefulWidget {
   final ScrollController? scrollController;
@@ -19,12 +20,13 @@ class QuranScreen extends StatefulWidget {
   final Duration? duration;
   final Duration? position;
   final VoidCallback onPlayAlFatiha;
+  final Function(int) onPlaySurah;
   final VoidCallback onPlayPause;
   final VoidCallback onStopAudio;
   final ValueChanged<double> onSeekAudio;
   const QuranScreen({super.key, this.scrollController, required this.slideValue,
     required this.showAudioPlayer, required this.isPlaying, required this.duration, required this.position,
-    required this.onPlayAlFatiha, required this.onPlayPause, required this.onStopAudio, required this.onSeekAudio});
+    required this.onPlayAlFatiha, required this.onPlaySurah, required this.onPlayPause, required this.onStopAudio, required this.onSeekAudio});
 
   @override
   State<QuranScreen> createState() => _QuranScreenState();
@@ -201,6 +203,7 @@ class _QuranScreenState extends State<QuranScreen> {
                           showPlayButton: showPlayButton,
                           isPlaying: widget.showAudioPlayer && surah['index'] == 1 && widget.isPlaying,
                           onPlay: showPlayButton ? widget.onPlayAlFatiha : null,
+                          onPlaySurah: widget.onPlaySurah,
                         ),
                       );
                     },
@@ -736,13 +739,14 @@ class _ReciterSwitch extends StatelessWidget {
   }
 }
 
-class _SurahListenCard extends StatelessWidget {
+class _SurahListenCard extends StatefulWidget {
   final String arabic;
   final String english;
   final int index;
   final bool isPlaying;
   final bool showPlayButton;
   final VoidCallback? onPlay;
+  final Function(int)? onPlaySurah;
   const _SurahListenCard({
     required this.arabic, 
     required this.english, 
@@ -750,11 +754,59 @@ class _SurahListenCard extends StatelessWidget {
     required this.isPlaying, 
     required this.showPlayButton,
     this.onPlay,
+    this.onPlaySurah,
   });
 
-  void _onDownloadTap() {
-    // TODO: Implement download functionality
-    print('Download tapped for Surah $index');
+  @override
+  State<_SurahListenCard> createState() => _SurahListenCardState();
+}
+
+class _SurahListenCardState extends State<_SurahListenCard> {
+  bool _isDownloaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkDownloadStatus();
+  }
+
+  Future<void> _checkDownloadStatus() async {
+    final downloaded = await QuranDownloadService.isSurahDownloaded(widget.index);
+    if (mounted) {
+      setState(() {
+        _isDownloaded = downloaded;
+      });
+    }
+  }
+
+  void _onDownloadTap(BuildContext context) async {
+    // Disable download for Al-Fatiha
+    if (widget.index == 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Al-Fatiha is already included in the app.')),
+      );
+      return;
+    }
+    // Show confirmation dialog first
+    final confirmed = await QuranDownloadService.showDownloadConfirmation(
+      context: context,
+      surahName: widget.arabic,
+      surahNameEnglish: widget.english,
+    );
+    if (confirmed && context.mounted) {
+      // Start the actual download
+      final success = await QuranDownloadService.downloadSurahToApp(
+        surahIndex: widget.index,
+        surahName: widget.arabic,
+        surahNameEnglish: widget.english,
+        context: context,
+      );
+      if (success) {
+        setState(() {
+          _isDownloaded = true;
+        });
+      }
+    }
   }
 
   @override
@@ -782,7 +834,7 @@ class _SurahListenCard extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    '$index',
+                    '${widget.index}',
                     style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: AppColors.forestGreen, fontSize: 20),
                   ),
                 ),
@@ -793,21 +845,35 @@ class _SurahListenCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      arabic,
+                      widget.arabic,
                       style: GoogleFonts.amiri(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black),
                       textDirection: TextDirection.rtl,
                     ),
                     Text(
-                      english,
+                      widget.english,
                       style: GoogleFonts.poppins(fontSize: 14, color: Colors.black.withOpacity(0.7)),
                     ),
                   ],
                 ),
               ),
-              if (showPlayButton)
+              if (widget.showPlayButton || _isDownloaded)
                 IconButton(
-                  icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill, color: AppColors.forestGreen, size: 36),
-                  onPressed: onPlay,
+                  icon: Icon(widget.isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill, color: AppColors.forestGreen, size: 36),
+                  onPressed: () async {
+                    if (widget.onPlay != null) {
+                      widget.onPlay!();
+                    } else if (_isDownloaded && widget.onPlaySurah != null) {
+                      // Play downloaded surah using local file path
+                      final filePath = await QuranDownloadService.getSurahFilePath(widget.index);
+                      if (filePath != null) {
+                        widget.onPlaySurah!(widget.index);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Audio file not found. Please re-download.')),
+                        );
+                      }
+                    }
+                  },
                 )
               else
                 Padding(
@@ -826,7 +892,7 @@ class _SurahListenCard extends StatelessWidget {
                         size: 18,
                       ),
                     ),
-                    onPressed: _onDownloadTap,
+                    onPressed: widget.index == 1 ? null : () => _onDownloadTap(context),
                   ),
                 ),
             ],
@@ -1373,26 +1439,31 @@ class _QuranPageViewState extends State<QuranPageView> {
                 child: Column(
                   children: [
                     SizedBox(height: 2),
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.forestGreen),
-                          onPressed: widget.onClose,
-                        ),
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 280),
+                    // HEADER ROW: back button and surah number only
+                    MediaQuery(
+                      data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.forestGreen),
+                            onPressed: widget.onClose,
+                          ),
+                          const Spacer(),
+                          Padding(
+                            padding: const EdgeInsets.only(right: 9.0),
                             child: Text(
-                              'Surah ${widget.surah}', 
+                              'Surah ${widget.surah}',
                               style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.bold, 
+                                fontWeight: FontWeight.bold,
                                 color: AppColors.forestGreen,
                                 fontSize: 18,
-                              )
+                              ),
+                              textAlign: TextAlign.right,
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     SizedBox(height: 2),
                     if (_loading)
@@ -1407,69 +1478,73 @@ class _QuranPageViewState extends State<QuranPageView> {
                             children: [
                               // Decorative Surah Name Banner
                               if (_surahNameArabic != null)
-                                Container(
-                                  margin: const EdgeInsets.only(top: 0, bottom: 20),
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(1),
-                                        child: Image.asset('lib/images/surah_banner.png',
-                                          
+                                Center(
+                                  child: ConstrainedBox(
+                                    constraints: const BoxConstraints(maxWidth: 420),
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        SizedBox(
+                                          height: (MediaQuery.of(context).size.width * 0.18).clamp(48.0, 75.0),
                                           width: double.infinity,
-                                          height: 75,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) {
-                                            print('Error loading surah banner: $error');
-                                            return Container(
-                                              width: double.infinity,
-                                              height: 150,
-                                              decoration: BoxDecoration(
-                                                gradient: LinearGradient(
-                                                  colors: [
-                                                    AppColors.forestGreen.withOpacity(0.1),
-                                                    AppColors.forestGreen.withOpacity(0.2),
-                                                    AppColors.forestGreen.withOpacity(0.1),
-                                                  ],
-                                                  begin: Alignment.topLeft,
-                                                  end: Alignment.bottomRight,
+                                          child: Image.asset(
+                                            'lib/images/surah_banner.png',
+                                            fit: BoxFit.contain,
+                                            errorBuilder: (context, error, stackTrace) {
+                                              return Container(
+                                                width: double.infinity,
+                                                height: 75,
+                                                decoration: BoxDecoration(
+                                                  gradient: LinearGradient(
+                                                    colors: [
+                                                      AppColors.forestGreen.withOpacity(0.1),
+                                                      AppColors.forestGreen.withOpacity(0.2),
+                                                      AppColors.forestGreen.withOpacity(0.1),
+                                                    ],
+                                                    begin: Alignment.topLeft,
+                                                    end: Alignment.bottomRight,
+                                                  ),
+                                                  borderRadius: BorderRadius.circular(0),
+                                                  border: Border.all(
+                                                    color: AppColors.forestGreen.withOpacity(0.3),
+                                                    width: 2,
+                                                  ),
                                                 ),
-                                                borderRadius: BorderRadius.circular(0),
-                                                border: Border.all(
-                                                  color: AppColors.forestGreen.withOpacity(0.3),
-                                                  width: 2,
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                      Positioned(
-                                        top: 20 ,
-                                        child: Text(
-                                          _surahNameArabic!,
-                                          style: const TextStyle(
-                                            fontFamily: 'UthmanicHafs',
-                                            fontSize: 29,
-                                            color: Color(0xFF171616),
-                                            fontWeight: FontWeight.normal,
-                                            shadows: [
-                                              Shadow(
-                                                offset: Offset(1, 1),
-                                                blurRadius: 2,
-                                                color: Color.fromARGB(255, 255, 255, 255),
-                                              ),
-                                            ],
+                                              );
+                                            },
                                           ),
-                                          textAlign: TextAlign.center,
                                         ),
-                                      ),
-                                    ],
+                                        Center(
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(top: 6.0), // Move title down a little
+                                            child: Text(
+                                              _surahNameArabic!,
+                                              style: TextStyle(
+                                                fontFamily: 'UthmanicHafs',
+                                                fontSize: (MediaQuery.of(context).size.width * 0.07).clamp(20.0, 28.0),
+                                                color: Color(0xFF171616),
+                                                fontWeight: FontWeight.normal,
+                                                shadows: [
+                                                  Shadow(
+                                                    offset: Offset(1, 1),
+                                                    blurRadius: 2,
+                                                    color: Color.fromARGB(255, 255, 255, 255),
+                                                  ),
+                                                ],
+                                              ),
+                                              textAlign: TextAlign.center,
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               // Centered Basmala symbol (﷽)
                               if (widget.surah != 1 && widget.surah != 9) ...[
-                                const SizedBox(height: 0),
+                                const SizedBox(height: 10), // Add a small gap between banner/title and Basmala
                                 Center(
                                   child: Text(
                                     '﷽',
@@ -1503,10 +1578,10 @@ class _QuranPageViewState extends State<QuranPageView> {
                                         child: RichText(
                                           textAlign: TextAlign.center,
                                           text: TextSpan(
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontFamily: 'UthmanicHafs',
                                               fontWeight: FontWeight.normal,
-                                              fontSize: 28,
+                                              fontSize: (MediaQuery.of(context).size.width * 0.066).clamp(18.0, 26.0),
                                               color: Color(0xFF171616),
                                               height: 2.1,
                                             ),

@@ -1,115 +1,86 @@
-# Athkari
+# Islamic App (Athkari)
 
-[![GitHub stars](https://img.shields.io/github/stars/thabet1thabet1/athkari?style=social)](https://github.com/thabet1thabet1/athkari)
+A comprehensive Islamic application built with Flutter that provides various Islamic features including prayers, Quran, Athkar, and more.
 
----
+## Features
 
-## 🔗 Links
-- **GitHub Repository:** [https://github.com/thabet1thabet1/athkari](https://github.com/thabet1thabet1/athkari)
-- **LinkedIn:** [Thabet Charef Khodja](https://www.linkedin.com/in/thabet-charef-khodja-97ab03347/)
+### Prayer Times & Qibla
+- Accurate prayer times based on location
+- Qibla compass direction
+- Prayer notifications
 
----
+### Quran
+- Complete Quran text with Arabic and English names
+- **NEW: Download functionality for all surahs (except Al-Fatiha)**
+  - Click the download button on any surah to be redirected to legitimate Quran websites
+  - Choose from multiple websites including Quran.com, SurahQuran.com, and more
+  - All websites offer Noreen recitation
+  - Users can download surahs individually to keep app size small
 
-## 📱 Screenshots
+### Athkar (Remembrance)
+- Morning and Evening Athkar
+- After Prayer Duas
+- Sleep and Waking Up Athkar
+- Tasbeeh counter
 
-<p align="center">
-  <img src="lib/screenshots/IMG_1452.jpg" alt="Screenshot 1" width="320"/>
-  <img src="lib/screenshots/IMG_1453.jpg" alt="Screenshot 2" width="320"/>
-  <img src="lib/screenshots/IMG_1454.jpg" alt="Screenshot 3" width="320"/>
-  <img src="lib/screenshots/IMG_1455.jpg" alt="Screenshot 4" width="320"/>
-  <img src="lib/screenshots/IMG_1456.jpg" alt="Screenshot 5" width="320"/>
-  <img src="lib/screenshots/IMG_1457.jpg" alt="Screenshot 6" width="320"/>
-</p>
+### Location Services
+- Automatic location detection for prayer times
+- Qibla direction calculation
 
----
+## Quran Download Feature
 
-## ✨ Features
+The app now includes a download feature for all surahs except Al-Fatiha (which is already included in the app). Here's how it works:
 
-- **Morning, Evening, Sleep, and Waking Up Athkar**  
-  - Authentic remembrances with Arabic text, translation, and repeat counter.
-  - Beautiful, scrollable cards with progress tracking and iOS-style completion dialogs.
+1. **Navigate to Quran Screen**: Go to the Quran section in the app
+2. **Switch to Listen Mode**: Toggle from "Read" to "Listen" mode
+3. **Find Your Surah**: Browse or search for the surah you want to download
+4. **Download**: Click the download button (green circle with download icon) next to any surah
+5. **Confirmation**: A dialog will appear showing the surah name and asking for confirmation
+6. **Choose Website**: Select from multiple legitimate Quran websites
+7. **Download**: You'll be redirected to the chosen website where you can download the surah
 
-- **Duas After Prayer**  
-  - Official post-salah supplications, including Ayat al-Kursi and the three Quls.
+### Supported Websites
+- **Quran.com** - Official Quran website
+- **SurahQuran.com** - Dedicated Quran recitation site
+- **Quran-Explorer.com** - Comprehensive Quran resource
+- **Al-Quran.info** - Islamic Quran platform
 
-- **Quran**  
-  - Read and listen to the Quran with Uthmani script and audio recitation.
-  - Surah navigation, search, and Khatmah (completion) tracking.
+All websites offer high-quality Noreen recitation and are legitimate sources for Quran downloads.
 
-- **Prayer Times**  
-  - Accurate daily prayer times based on your location.
-  - Next prayer countdown, notifications, and monthly calendar.
+## Technical Details
 
-- **Qibla Direction**  
-  - Compass to find the Qibla direction from your current location.
+### Dependencies Added
+- `url_launcher: ^6.2.5` - For opening external websites
 
-- **Tasbeeh Counter**  
-  - Simple, elegant digital counter for dhikr.
+### Platform Permissions
+- **Android**: Added internet permission and URL scheme queries
+- **iOS**: Added LSApplicationQueriesSchemes for HTTP/HTTPS
 
-- **Modern UI/UX**  
-  - Consistent, elegant design with Amiri font for Arabic and Poppins for English.
-  - Responsive layouts, glassmorphic effects, and beautiful backgrounds.
+### Architecture
+- `QuranDownloadService` - Handles all download-related functionality
+- Confirmation dialogs for user safety
+- Website selection for user choice
+- Error handling for failed URL launches
 
----
+## Getting Started
 
-## 🚀 Getting Started
+1. Clone the repository
+2. Run `flutter pub get` to install dependencies
+3. Run `flutter run` to start the app
 
-1. **Clone the repository:**
-   ```sh
-   git clone https://github.com/thabet1thabet1/athkari.git
-   cd athkari
-   ```
+## Testing
 
-2. **Install dependencies:**
-   ```sh
-   flutter pub get
-   ```
+Run the tests with:
+```bash
+flutter test
+```
 
-3. **Run the app:**
-   ```sh
-   flutter run
-   ```
+The Quran download functionality is tested in `test/quran_download_test.dart`.
 
----
+## Contributing
 
-## 📂 Project Structure
+Feel free to contribute to this project by submitting issues or pull requests.
 
-- `lib/`
-  - `core/` – Theme, constants, and services
-  - `data/` – Static data (e.g., verses)
-  - `ui/screens/` – All main screens (Athkar, Quran, Prayers, etc.)
-  - `ui/widgets/` – Reusable UI components
-  - `images/` – App images and icons
-  - `screenshots/` – App screenshots for documentation
+## License
 
----
-
-## 🛠️ Tech Stack
-
-- **Flutter** (cross-platform mobile)
-- **Dart** (programming language)
-- **Google Fonts** (Amiri, Poppins)
-- **Location & Geocoding** (for prayer times and Qibla)
-- **just_audio** (Quran recitation)
-- **Shared Preferences** (local storage)
-
----
-
-## 📜 License
-
-This project is for educational and personal use. Please respect the rights of Quranic and Islamic content.
-
----
-
-## 🙏 Contributing & Support
-
-- Found a bug or have a feature request? [Open an issue](https://github.com/thabet1thabet1/athkari/issues) or submit a pull request.
-- Connect with me on [LinkedIn](https://www.linkedin.com/in/thabet-charef-khodja-97ab03347/) for questions, feedback, or collaboration opportunities.
-
----
-
-## 📧 Contact
-
-For any questions, suggestions, or professional inquiries, feel free to reach out via [LinkedIn](https://www.linkedin.com/in/thabet-charef-khodja-97ab03347/) or through the [GitHub repository](https://github.com/thabet1thabet1/athkari).
-
----
+This project is licensed under the MIT License.

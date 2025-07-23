@@ -51,14 +51,13 @@ class QiblaCompassBody extends StatefulWidget {
 class _QiblaCompassBodyState extends State<QiblaCompassBody> with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
-
-  double _qiblaDirection = 0.0;
-  double _deviceDirection = 0.0;
   bool _isCalibrating = false;
-  bool _hasLocationPermission = false;
   bool _isLoading = true;
   String _currentLocation = '';
-  Position? _currentPosition;
+  Future<bool?>? _deviceSupportFuture;
+  double? _manualQiblaBearing;
+  double? _currentLat;
+  double? _currentLng;
 
   @override
   void initState() {
@@ -75,8 +74,8 @@ class _QiblaCompassBodyState extends State<QiblaCompassBody> with TickerProvider
       curve: Curves.easeInOut,
     ));
     _startPulseAnimation();
-    _checkLocationPermission();
-    _startCompassListener();
+    _getLocation();
+    _deviceSupportFuture = FlutterQiblah.androidDeviceSensorSupport();
   }
 
   void _startPulseAnimation() {
@@ -89,259 +88,155 @@ class _QiblaCompassBodyState extends State<QiblaCompassBody> with TickerProvider
     super.dispose();
   }
 
-  Future<void> _checkLocationPermission() async {
+  Future<void> _getLocation() async {
+    setState(() { _isLoading = true; });
     try {
-      // Try to get current location using the location service
       final locationData = await LocationService.getCurrentLocation();
-      
-      if (locationData != null) {
-        // Calculate qibla direction
-        double qiblaDirection = await _calculateQiblaDirection(
-          locationData['lat'],
-          locationData['lng'],
-        );
-
-        if (mounted) {
-          setState(() {
-            _hasLocationPermission = true;
-            _isLoading = false;
-            _currentLocation = locationData['city'];
-            _qiblaDirection = qiblaDirection;
-          });
-        }
-      } else {
-        // If no location available, show permission dialog
-        if (mounted) {
-          setState(() {
-            _hasLocationPermission = false;
-            _isLoading = false;
-          });
-          _showLocationPermissionDialog();
-        }
+      if (locationData != null && mounted) {
+        setState(() {
+          _currentLocation = locationData['city'] ?? '';
+          _isLoading = false;
+          _currentLat = locationData['lat'];
+          _currentLng = locationData['lng'];
+          _manualQiblaBearing = _calculateQiblaBearing(_currentLat!, _currentLng!);
+        });
+      } else if (mounted) {
+        setState(() {
+          _currentLocation = '';
+          _isLoading = false;
+        });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _hasLocationPermission = false;
+          _currentLocation = '';
           _isLoading = false;
         });
       }
     }
   }
 
-  void _showLocationPermissionDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => LocationPermissionDialog(
-        title: 'Location Required',
-        message: 'To show the correct qibla direction, we need access to your current location.',
-        onAllow: () async {
-          Navigator.of(context).pop();
-          final locationData = await LocationService.getCurrentLocation(forceRequest: true);
-          if (locationData != null && mounted) {
-            double qiblaDirection = await _calculateQiblaDirection(
-              locationData['lat'],
-              locationData['lng'],
-            );
-            setState(() {
-              _hasLocationPermission = true;
-              _isLoading = false;
-              _currentLocation = locationData['city'];
-              _qiblaDirection = qiblaDirection;
-            });
-          } else if (mounted) {
-            setState(() {
-              _hasLocationPermission = false;
-              _isLoading = false;
-            });
-          }
-        },
-        onDeny: () {
-          Navigator.of(context).pop();
-          setState(() {
-            _hasLocationPermission = false;
-            _isLoading = false;
-          });
-        },
-      ),
-    );
+  double _calculateQiblaBearing(double lat, double lng) {
+    // Kaaba coordinates
+    const double kaabaLat = 21.4225;
+    const double kaabaLng = 39.8262;
+    double toRadians(double deg) => deg * math.pi / 180;
+    double toDegrees(double rad) => rad * 180 / math.pi;
+    double dLon = toRadians(kaabaLng - lng);
+    double lat1 = toRadians(lat);
+    double lat2 = toRadians(kaabaLat);
+    double y = math.sin(dLon) * math.cos(lat2);
+    double x = math.cos(lat1) * math.sin(lat2) -
+               math.sin(lat1) * math.cos(lat2) * math.cos(dLon);
+    double bearing = math.atan2(y, x);
+    double bearingDegrees = (toDegrees(bearing) + 360) % 360;
+    return bearingDegrees;
   }
-
-  void _startCompassListener() {
-    // For now, we'll use a simpler approach without the compass sensor
-    // The qibla direction will be calculated based on location only
-  }
-
-  Future<double> _calculateQiblaDirection(double latitude, double longitude) async {
-    try {
-      // Manual calculation using the great circle formula
-      const double kaabaLat = 21.4225;
-      const double kaabaLng = 39.8262;
-      
-      // Convert to radians
-      double lat1 = latitude * math.pi / 180;
-      double lng1 = longitude * math.pi / 180;
-      double lat2 = kaabaLat * math.pi / 180;
-      double lng2 = kaabaLng * math.pi / 180;
-      
-      // Calculate qibla direction using the great circle formula
-      double y = math.sin(lng2 - lng1) * math.cos(lat2);
-      double x = math.cos(lat1) * math.sin(lat2) - 
-                 math.sin(lat1) * math.cos(lat2) * math.cos(lng2 - lng1);
-      
-      double qiblaDirection = math.atan2(y, x) * 180 / math.pi;
-      
-      // Convert to 0-360 range
-      qiblaDirection = (qiblaDirection + 360) % 360;
-      
-      print('Qibla direction calculated: $qiblaDirection degrees for lat: $latitude, lng: $longitude');
-      
-      return qiblaDirection;
-    } catch (e) {
-      print('Error calculating qibla direction: $e');
-      return 0.0;
-    }
-  }
-
-  void _calibrateCompass() async {
-    setState(() {
-      _isCalibrating = true;
-    });
-    
-    try {
-      await _checkLocationPermission();
-    } catch (e) {
-      // Handle error
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isCalibrating = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _showLocationServicesDialog() async {
-    return showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            'Location Services Disabled',
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-              color: AppColors.forestGreen,
-            ),
-          ),
-          content: Text(
-            'Please enable location services in your device settings to use the Qibla compass.',
-            style: GoogleFonts.poppins(),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'OK',
-                style: GoogleFonts.poppins(
-                  color: AppColors.forestGreen,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const SizedBox(height: 20),
-            if (_isLoading)
-              _buildLoadingWidget()
-            else if (_hasLocationPermission)
-              _buildCompassWidget()
-            else
-              _buildLocationPermissionRequest(),
-            const SizedBox(height: 200),
-            Center(
-              child: SizedBox(
-                width: 220,
-                height: 54,
-                child: ElevatedButton(
-                  onPressed: _isCalibrating ? null : _calibrateCompass,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.forestGreen,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(32),
+    if (_isLoading) {
+      return _buildLoadingWidget();
+    }
+    return FutureBuilder<bool?>(
+      future: _deviceSupportFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return _buildLoadingWidget();
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('Sensor error: \n${snapshot.error}', style: TextStyle(color: Colors.red)));
+        }
+        if (snapshot.data == false) {
+          return Center(child: Text('Device does not support required sensors for compass.', style: TextStyle(color: Colors.red)));
+        }
+        // Only show compass if sensors are supported
+        return StreamBuilder<QiblahDirection>(
+          stream: FlutterQiblah.qiblahStream,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return _buildLoadingWidget();
+            }
+            if (snapshot.hasError) {
+              return Center(child: Text('Compass error: \n${snapshot.error}', style: TextStyle(color: Colors.red)));
+        }
+        if (!snapshot.hasData) {
+          return _buildLoadingWidget();
+        }
+        final qiblahDirection = snapshot.data!;
+            print('Qiblah: ${qiblahDirection.qiblah}, Device: ${qiblahDirection.direction}, Offset: ${qiblahDirection.offset}');
+            // Rotate the whole compass so the north arrow always points to Qibla
+            final qiblaCompassAngle = ((_manualQiblaBearing ?? 0) - qiblahDirection.direction) * (math.pi / 180);
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 20),
+              Container(
+                width: 280,
+                height: 280,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.kGreenShadow.withOpacity(0.3),
+                      blurRadius: 30,
+                      offset: const Offset(0, 10),
                     ),
-                    elevation: 0,
-                  ),
-                  child: _isCalibrating
-                      ? Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ],
+                ),
+                child: Stack(
+                  children: [
+                        // Rotate the whole compass so the north arrow points to Qibla
+                    Center(
+                      child: Transform.rotate(
+                            angle: qiblaCompassAngle,
+                        child: Container(
+                          width: 200,
+                          height: 200,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.95),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Setting Location...',
-                              style: GoogleFonts.poppins(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.location_on, color: Colors.white),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Set Location',
-                              style: GoogleFonts.poppins(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
+                          child: Stack(
+                            children: [
+                              _buildCompassNeedle(),
+                              _buildDegreeMarkers(),
+                            ],
+                          ),
                         ),
+                      ),
+                    ),
+                    _buildKaabaIcon(),
+                  ],
                 ),
               ),
-            ),
-            if (_hasLocationPermission && _currentLocation.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: Text(
-                  _currentLocation,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: AppColors.forestGreen,
-                    fontWeight: FontWeight.w500,
+              if (_currentLocation.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: Text(
+                    _currentLocation,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: AppColors.forestGreen,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-              ),
-          ],
-        ),
-      ),
+              const SizedBox(height: 200),
+            ],
+          ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -377,62 +272,17 @@ class _QiblaCompassBodyState extends State<QiblaCompassBody> with TickerProvider
 
   Widget _buildQiblaIndicator() {
     return Center(
-      child: Container(
-        width: 4,
-        height: 80,
-        decoration: BoxDecoration(
-          color: AppColors.forestGreen,
-          borderRadius: BorderRadius.circular(2),
-        ),
+      child: Icon(
+        Icons.arrow_upward,
+        color: Colors.red,
+        size: 80,
       ),
     );
   }
 
   Widget _buildQiblaDirectionInfo() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Text(
-            'Qibla Direction',
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppColors.forestGreen,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '${_qiblaDirection.toStringAsFixed(1)}°',
-            style: GoogleFonts.poppins(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppColors.forestGreen,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Point your device towards the green arrow',
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: AppColors.darkGray,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
+    // This widget is no longer used, as direction is handled by the stream.
+    return SizedBox.shrink();
   }
 
   Widget _buildOuterRing() {
@@ -507,33 +357,8 @@ class _QiblaCompassBodyState extends State<QiblaCompassBody> with TickerProvider
   }
 
   Widget _buildInnerCompass() {
-    return Center(
-      child: Transform.rotate(
-        angle: -_qiblaDirection * math.pi / 180, // Negative because we want to rotate the compass, not the needle
-        child: Container(
-          width: 200,
-          height: 200,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white.withOpacity(0.95),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Stack(
-            children: [
-              _buildCompassNeedle(),
-              _buildDegreeMarkers(),
-              _buildQiblaIndicator(),
-            ],
-          ),
-        ),
-      ),
-    );
+    // This widget is no longer used, as rotation is handled by the stream.
+    return SizedBox.shrink();
   }
 
   Widget _buildCompassNeedle() {
@@ -639,7 +464,7 @@ class _QiblaCompassBodyState extends State<QiblaCompassBody> with TickerProvider
               setState(() {
                 _isLoading = true;
               });
-              await _checkLocationPermission();
+              await _getLocation();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.forestGreen,

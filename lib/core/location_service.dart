@@ -90,29 +90,21 @@ class LocationService {
       );
       
       String city = 'Unknown';
+      String country = 'Unknown';
       if (placemarks.isNotEmpty) {
         final placemark = placemarks.first;
-        // Try to get the most specific city name available
-        city = placemark.locality ?? 
-               placemark.subLocality ?? 
-               placemark.subAdministrativeArea ?? 
-               placemark.administrativeArea ?? 
-               'Unknown';
-        
-        // Add country for better identification if city is generic
-        if (placemark.country != null && 
-            (city == 'Unknown' || city.length < 3 || 
-             city.toLowerCase() == placemark.country!.toLowerCase())) {
+        city = placemark.locality ?? placemark.subLocality ?? placemark.subAdministrativeArea ?? placemark.administrativeArea ?? 'Unknown';
+        country = placemark.country ?? 'Unknown';
+        if (placemark.country != null && (city == 'Unknown' || city.length < 3 || city.toLowerCase() == placemark.country!.toLowerCase())) {
           city = '${placemark.locality ?? placemark.subAdministrativeArea ?? placemark.administrativeArea ?? 'Unknown'}, ${placemark.country}';
         }
       }
-
       // Save the location
       await saveLastKnownLocation(city, position.latitude, position.longitude);
       await saveLocationPermissionStatus(true);
-
       return {
         'city': city,
+        'country': country,
         'lat': position.latitude,
         'lng': position.longitude,
       };

@@ -11,6 +11,7 @@ import 'dart:ui';
 import 'package:just_audio/just_audio.dart';
 import 'ui/widgets/apple_music_player.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'core/quran_download_service.dart';
 
 void main() {
   runApp(const MyApp());
@@ -34,11 +35,22 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => BottomNavProvider(),
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Athkar App',
-        theme: AppTheme.lightTheme,
-        home: const SplashScreen(),
+      child: Builder(
+        builder: (context) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Athkar App',
+            theme: AppTheme.lightTheme,
+            home: const SplashScreen(),
+            builder: (context, child) {
+              // Force textScaleFactor to 1.0 everywhere
+              return MediaQuery(
+                data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+                child: child!,
+              );
+            },
+          );
+        },
       ),
     );
   }
@@ -139,32 +151,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             // Show welcome screen for first-time users
             Navigator.of(context).pushReplacement(
               PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) => WelcomeScreen(
-                  onContinue: () async {
-                    // Mark that user has seen welcome screen
-                    final prefs = await SharedPreferences.getInstance();
-                    await prefs.setBool('has_seen_welcome', true);
-                    
-                    // Navigate to main app
-                    if (mounted) {
-                      Navigator.of(context).pushReplacement(
-                        PageRouteBuilder(
-                          pageBuilder: (context, animation, secondaryAnimation) => const MainScaffold(),
-                          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                            return FadeTransition(
-                              opacity: CurvedAnimation(
-                                parent: animation,
-                                curve: Curves.easeInOutCubic,
-                              ),
-                              child: child,
-                            );
-                          },
-                          transitionDuration: const Duration(milliseconds: 800),
-                        ),
-                      );
-                    }
-                  },
-                ),
+                pageBuilder: (context, animation, secondaryAnimation) => const WelcomeScreen(),
                 transitionsBuilder: (context, animation, secondaryAnimation, child) {
                   return FadeTransition(
                     opacity: CurvedAnimation(
@@ -304,6 +291,38 @@ class _MainScaffoldState extends State<MainScaffold> {
     }
   }
 
+  Future<void> _playSurah(int surahIndex) async {
+    setState(() { _showAudioPlayer = true; });
+    try {
+      String? audioPath;
+      if (surahIndex == 1) {
+        audioPath = 'assets/quran/001 Surah Al-Fatiha Sheikh noreen muhammad sadiq.mp3';
+      } else {
+        audioPath = await QuranDownloadService.getSurahFilePath(surahIndex);
+      }
+      if (audioPath == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Audio file not found. Please download the surah.')),
+          );
+        }
+        return;
+      }
+      if (audioPath.startsWith('assets/')) {
+        await _audioPlayer.setAsset(audioPath);
+      } else {
+        await _audioPlayer.setFilePath(audioPath);
+      }
+      await _audioPlayer.play();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error playing audio: $e')),
+        );
+      }
+    }
+  }
+
   void _togglePlayPause() {
     if (_isPlaying) {
       _audioPlayer.pause();
@@ -341,6 +360,7 @@ class _MainScaffoldState extends State<MainScaffold> {
               duration: _duration,
               position: _position,
               onPlayAlFatiha: _playAlFatiha,
+              onPlaySurah: _playSurah,
               onPlayPause: _togglePlayPause,
               onStopAudio: _stopAudio,
               onSeekAudio: _seekAudio,
@@ -545,6 +565,23 @@ class _GlassNavBarItem extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// Add this widget below MainScaffold
+class MainScaffoldWithIndex extends StatelessWidget {
+  final int initialIndex;
+  const MainScaffoldWithIndex({super.key, required this.initialIndex});
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) {
+        final provider = BottomNavProvider();
+        provider.setIndex(initialIndex);
+        return provider;
+      },
+      child: const MainScaffold(),
     );
   }
 }

@@ -13,10 +13,30 @@ import 'package:hijri/hijri_calendar.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../main.dart' as main_app show AppBackground;
+import 'package:geocoding/geocoding.dart';
 
 import 'qibla_screen.dart';
 
-
+// Top-level function for calculation method selection
+int getCalculationMethodForCountry(String? country) {
+  if (country == null) return 3; // Default to MWL
+  final c = country.toLowerCase();
+  if (c.contains('saudi')) return 4; // Umm Al-Qura
+  if (c.contains('qatar')) return 4;
+  if (c.contains('kuwait')) return 4;
+  if (c.contains('uae')) return 4;
+  if (c.contains('oman')) return 4;
+  if (c.contains('bahrain')) return 4;
+  if (c.contains('turkey')) return 13; // Diyanet
+  if (c.contains('singapore')) return 15; // MUIS
+  if (c.contains('france')) return 12; // UOIF
+  if (c.contains('north america') || c.contains('united states') || c.contains('canada')) return 2; // ISNA
+  if (c.contains('egypt')) return 5; // Egypt
+  if (c.contains('pakistan')) return 7; // Karachi
+  if (c.contains('russia')) return 14; // Russia
+  if (c.contains('algeria') || c.contains('morocco') || c.contains('tunisia')) return 3; // MWL
+  return 3; // Default to MWL
+}
 
 class PrayerTime {
   final String name;
@@ -80,7 +100,7 @@ class _PrayersScreenState extends State<PrayersScreen> {
       final locationData = await LocationService.getCurrentLocation();
       
       if (locationData != null) {
-        _updatePrayerTimes(locationData['lat'], locationData['lng'], locationData['city']);
+        _updatePrayerTimes(locationData['lat'], locationData['lng'], locationData['city'], locationData['country']);
       } else {
         // If no location available, show permission dialog
         if (mounted) {
@@ -107,7 +127,7 @@ class _PrayersScreenState extends State<PrayersScreen> {
           Navigator.of(context).pop();
           final locationData = await LocationService.getCurrentLocation(forceRequest: true);
           if (locationData != null && mounted) {
-            _updatePrayerTimes(locationData['lat'], locationData['lng'], locationData['city']);
+            _updatePrayerTimes(locationData['lat'], locationData['lng'], locationData['city'], locationData['country']);
           } else if (mounted) {
             setState(() {
               _city = 'Location denied';
@@ -126,10 +146,9 @@ class _PrayersScreenState extends State<PrayersScreen> {
     );
   }
 
-  Future<void> _updatePrayerTimes(double lat, double lng, String city) async {
-    // Get prayer times from reliable API
+  Future<void> _updatePrayerTimes(double lat, double lng, String city, [String? country]) async {
     try {
-      final apiPrayerTimes = await _fetchPrayerTimesFromAPI(lat, lng);
+      final apiPrayerTimes = await _fetchPrayerTimesFromAPI(lat, lng, country);
       if (apiPrayerTimes != null && apiPrayerTimes.isNotEmpty) {
         if (mounted) {
           setState(() {
@@ -144,8 +163,6 @@ class _PrayersScreenState extends State<PrayersScreen> {
     } catch (e) {
       print('API prayer times failed: $e');
     }
-    
-    // If API fails, show error state
     if (mounted) {
       setState(() {
         _city = city;
@@ -157,23 +174,16 @@ class _PrayersScreenState extends State<PrayersScreen> {
     }
   }
 
-  Future<List<PrayerTime>?> _fetchPrayerTimesFromAPI(double lat, double lng) async {
+  Future<List<PrayerTime>?> _fetchPrayerTimesFromAPI(double lat, double lng, [String? country]) async {
     try {
       final date = DateTime.now();
       final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-      
-      // Use Aladhan API with method 2 (same as Google)
-      final url = 'http://api.aladhan.com/v1/timings/$dateStr?latitude=$lat&longitude=$lng&method=2';
+      final method = getCalculationMethodForCountry(country);
+      final url = 'http://api.aladhan.com/v1/timings/$dateStr?latitude=$lat&longitude=$lng&method=$method';
       final response = await http.get(Uri.parse(url));
-      
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final timings = data['data']['timings'];
-        
-        print('Aladhan API Response: $timings');
-        
-        // The API returns times in the location's local time
-        // We need to create DateTime objects that represent the correct local time
         return [
           if (timings['Fajr'] != null)
             PrayerTime(
@@ -1132,6 +1142,10 @@ class _MonthlyPrayerCalendarPageState extends State<MonthlyPrayerCalendarPage> {
       Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
       double lat = position.latitude;
       double lng = position.longitude;
+      // Get country using reverse geocoding
+      List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
+      String country = placemarks.isNotEmpty ? (placemarks.first.country ?? 'Unknown') : 'Unknown';
+      int method = getCalculationMethodForCountry(country);
       // Get first day of this hijri month in Gregorian
       final hijri = HijriCalendar()
         ..hYear = _hijriYear
@@ -1142,17 +1156,13 @@ class _MonthlyPrayerCalendarPageState extends State<MonthlyPrayerCalendarPage> {
       List<List<PrayerTime>> monthTimes = [];
       for (int i = 0; i < daysInMonth; i++) {
         DateTime day = firstDay.add(Duration(days: i));
-        
-        // Use API for each day with method 2 (matches Google)
         final dayStr = '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
-        final url = 'http://api.aladhan.com/v1/timings/$dayStr?latitude=$lat&longitude=$lng&method=2';
-        
+        final url = 'http://api.aladhan.com/v1/timings/$dayStr?latitude=$lat&longitude=$lng&method=$method';
         try {
           final response = await http.get(Uri.parse(url));
           if (response.statusCode == 200) {
             final data = json.decode(response.body);
             final timings = data['data']['timings'];
-            
             monthTimes.add([
               if (timings['Fajr'] != null)
                 PrayerTime(name: 'Fajr', icon: Icons.nightlight_round, time: _parseTimeStringForCalendar(timings['Fajr'], day)),
@@ -1198,12 +1208,11 @@ class _MonthlyPrayerCalendarPageState extends State<MonthlyPrayerCalendarPage> {
               ],
             ),
           );
-          if (mounted) Navigator.of(context).pop();
         }
-        return;
-      }
-      if (mounted) {
-        setState(() { _error = 'Failed to load calendar: $e'; _loading = false; });
+      } else {
+        if (mounted) {
+          setState(() { _error = errorMsg; _loading = false; });
+        }
       }
     }
   }
