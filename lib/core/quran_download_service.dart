@@ -6,6 +6,9 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 import '../ui/widgets/download_progress_dialog.dart';
+import 'package:http/http.dart' as http;
+import 'package:html/parser.dart' as html_parser;
+import 'package:html/dom.dart' as dom;
 
 class QuranDownloadService {
   static const String _downloadsKey = 'downloaded_surahs';
@@ -66,17 +69,139 @@ class QuranDownloadService {
         _showErrorDialog(context, 'Storage permission is required to download surahs');
         return false;
       }
+
+      // Create a ValueNotifier for progress tracking
+      final ValueNotifier<double> progressNotifier = ValueNotifier<double>(0.0);
+      
       // Show progress dialog
-      showDialog(
+      final progressDialog = showDialog<void>(
         context: context,
         barrierDismissible: false,
-        builder: (BuildContext context) {
-          return DownloadProgressDialog(
-            surahName: surahName,
-            surahNameEnglish: surahNameEnglish,
+        builder: (BuildContext dialogContext) {
+          return WillPopScope(
+            onWillPop: () async => false, // Prevent back button dismissal
+            child: ValueListenableBuilder<double>(
+              valueListenable: progressNotifier,
+              builder: (context, progress, child) {
+                return AlertDialog(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  contentPadding: const EdgeInsets.all(24),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF18824B).withOpacity(0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        padding: const EdgeInsets.all(16),
+                        child: const Icon(
+                          Icons.download_rounded, 
+                          color: Color(0xFF18824B), 
+                          size: 36
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Downloading Surah...',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        surahName,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF18824B),
+                        ),
+                        textDirection: TextDirection.rtl,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        surahNameEnglish,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      Container(
+                        width: double.infinity,
+                        child: Column(
+                          children: [
+                            LinearProgressIndicator(
+                              value: progress,
+                              backgroundColor: Colors.grey[300],
+                              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF18824B)),
+                              minHeight: 8,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              '${(progress * 100).toInt()}%',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF18824B),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Please wait while we download the surah...',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
           );
         },
       );
+      
+      // Fetch the surah page and extract the MP3 link
+      final surahUrl = 'https://surahquran.com/English/Noreen-Siddiq/$surahIndex.html';
+      final pageRes = await http.get(Uri.parse(surahUrl));
+      String? mp3Url;
+      if (pageRes.statusCode == 200) {
+        final dom.Document document = html_parser.parse(pageRes.body);
+        final anchors = document.getElementsByTagName('a');
+        for (final a in anchors) {
+          if (a.text.trim().toLowerCase().contains('download surah')) {
+            mp3Url = a.attributes['href'];
+            break;
+          }
+        }
+        if (mp3Url != null && mp3Url.startsWith('/')) {
+          mp3Url = 'https://surahquran.com$mp3Url';
+        }
+      }
+      // Fallback: Try archive.org if no valid surahquran.com link found
+      if (mp3Url == null || !mp3Url.endsWith('.mp3')) {
+        final padded = surahIndex.toString().padLeft(3, '0');
+        mp3Url = 'https://archive.org/download/noreen-mohamed-siddiq/$padded.mp3';
+      }
+      // Test the fallback link before proceeding
+      final testRes = await http.head(Uri.parse(mp3Url));
+      if (testRes.statusCode != 200) {
+        Navigator.of(context).pop();
+        _showErrorDialog(context, 'Could not find a valid MP3 download link.');
+        return false;
+      }
       // Get app documents directory
       final appDir = await getApplicationDocumentsDirectory();
       final downloadsDir = Directory('${appDir.path}/$_downloadsFolder');
@@ -85,22 +210,38 @@ class QuranDownloadService {
       }
       final fileName = '${surahIndex.toString().padLeft(3, '0')}_$surahNameEnglish.mp3';
       final filePath = '${downloadsDir.path}/$fileName';
-      final downloadUrl = getNoreenDownloadUrl(surahIndex);
-      if (downloadUrl == null) throw Exception('No download URL for this surah.');
-      final response = await Dio().download(
-        downloadUrl,
+      final dioInstance = Dio();
+      
+      // Download with progress tracking
+      final response = await dioInstance.download(
+        mp3Url,
         filePath,
         onReceiveProgress: (received, total) {
-          // Optionally update progress dialog
+          if (total != -1) {
+            final progress = received / total;
+            progressNotifier.value = progress;
+          }
         },
       );
+
+      // Close progress dialog
+      Navigator.of(context).pop();
+      
       if (response.statusCode != 200) {
-        throw Exception('Download failed with status: \\${response.statusCode}');
+        _showErrorDialog(context, 'Download failed with status: ${response.statusCode}');
+        return false;
       }
+      
+      // Save download record
       await _saveDownloadRecord(surahIndex, filePath, surahName, surahNameEnglish);
+      
+      // Show success dialog
+      _showSuccessDialog(context, surahName, surahNameEnglish);
+      
       await Future.delayed(Duration(milliseconds: 100));
       return true;
     } catch (e) {
+      Navigator.of(context).pop();
       _showErrorDialog(context, 'Download error: $e');
       return false;
     }
@@ -326,68 +467,106 @@ class QuranDownloadService {
     return await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text(
-            'Download Surah',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF18824B).withOpacity(0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: const Icon(Icons.download_rounded, color: Color(0xFF18824B), size: 36),
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  'Download Surah',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                    fontSize: 20,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Download this surah to your device for offline listening:',
+                  style: TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontSize: 14,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  surahName,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF18824B),
+                  ),
+                  textDirection: TextDirection.rtl,
+                  textAlign: TextAlign.center,
+                ),
+                Text(
+                  surahNameEnglish,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  "Note: The surah will be downloaded with Noreen recitation and integrated with the app's audio player.",
+                  style: TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF18824B),
+                          side: const BorderSide(color: Color(0xFF18824B), width: 1.5),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF18824B),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          elevation: 0,
+                        ),
+                        child: const Text('Download', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Download this surah to your device for offline listening:',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                surahName,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
-                ),
-                textDirection: TextDirection.rtl,
-              ),
-              Text(
-                surahNameEnglish,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Note: The surah will be downloaded with Noreen recitation and integrated with the app\'s audio player.',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 12,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Download'),
-            ),
-          ],
         );
       },
     ) ?? false;
@@ -455,21 +634,75 @@ class QuranDownloadService {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text('Download Complete!'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          contentPadding: const EdgeInsets.all(24),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.check_circle, color: Colors.green, size: 48),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.12),
+                  shape: BoxShape.circle,
+                ),
+                padding: const EdgeInsets.all(16),
+                child: const Icon(Icons.check_circle, color: Colors.green, size: 48),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Download Complete!',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                surahName,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF18824B),
+                ),
+                textDirection: TextDirection.rtl,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                surahNameEnglish,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 16),
-              Text('$surahName ($surahNameEnglish)'),
-              const SizedBox(height: 8),
-              const Text('has been downloaded successfully. You can now play it offline!'),
+              const Text(
+                'has been downloaded successfully. You can now play it offline!',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.black54,
+                ),
+                textAlign: TextAlign.center,
+              ),
             ],
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('OK'),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF18824B),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                ),
+                child: const Text('Great!', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              ),
             ),
           ],
         );
@@ -514,4 +747,4 @@ class QuranDownloadService {
       return false;
     }
   }
-} 
+}

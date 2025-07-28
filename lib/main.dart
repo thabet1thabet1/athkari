@@ -12,8 +12,67 @@ import 'package:just_audio/just_audio.dart';
 import 'ui/widgets/apple_music_player.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/quran_download_service.dart';
+import 'core/notification_service.dart';
+import 'core/prayer_times_service.dart';
+import 'data/verses.dart';
+import 'package:geolocator/geolocator.dart';
 
-void main() {
+Future<void> rescheduleAllPrayerNotifications() async {
+  final prefs = await SharedPreferences.getInstance();
+  // Fetch today's prayer times
+  final prayerTimes = await PrayerTimesService.getPrayerTimes();
+  if (prayerTimes == null) return;
+  // List of prayer names in the same order as your UI
+  final List<String> prayerNames = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+  final List<DateTime?> times = [
+    prayerTimes.fajr,
+    prayerTimes.dhuhr,
+    prayerTimes.asr,
+    prayerTimes.maghrib,
+    prayerTimes.isha,
+  ];
+  for (int i = 0; i < prayerNames.length; i++) {
+    final enabled = prefs.getBool('prayer_notif_enabled_$i') ?? false;
+    final offset = prefs.getInt('prayer_offset_$i') ?? 0;
+    final time = times[i];
+    if (enabled && time != null) {
+      await NotificationService.schedulePrayerNotification(
+        id: i + 1,
+        title: "It's time for ${prayerNames[i]}",
+        body: 'Time to pray ${prayerNames[i]}.',
+        scheduledTime: time.add(Duration(minutes: offset)),
+      );
+    }
+  }
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService.init();
+  // Schedule daily athkar notifications
+  await NotificationService.scheduleAthkarNotification(
+    id: 100,
+    title: 'Morning Athkar',
+    body: 'Remember to recite your morning athkar.',
+    hour: 5,
+    minute: 50,
+  );
+  await NotificationService.scheduleAthkarNotification(
+    id: 101,
+    title: 'Evening Athkar',
+    body: 'Remember to recite your evening athkar.',
+    hour: 17,
+    minute: 30,
+  );
+  await NotificationService.scheduleAthkarNotification(
+    id: 102,
+    title: 'Sleep Athkar',
+    body: 'Remember to recite your sleep athkar.',
+    hour: 22,
+    minute: 0,
+  );
+  // Reschedule prayer notifications on app start
+  await rescheduleAllPrayerNotifications();
   runApp(const MyApp());
 }
 
@@ -84,38 +143,31 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 
   Future<void> _checkFirstTimeAndLocation() async {
-    // Check if this is the first time
     final prefs = await SharedPreferences.getInstance();
     _isFirstTime = prefs.getBool('has_seen_welcome') != true;
-    
-    // Check if location permission was previously granted
-    bool wasGranted = await LocationService.wasLocationPermissionGranted();
-    
-    if (!wasGranted) {
-      // Show location permission dialog after a short delay
+
+    // Check actual OS permission
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+      // Show your custom dialog
       await Future.delayed(const Duration(seconds: 1));
       if (mounted) {
         _showLocationPermissionDialog();
         return;
       }
     }
-    
     _proceedToMainApp();
   }
 
   Future<void> _checkLocationPermission() async {
-    // Check if location permission was previously granted
-    bool wasGranted = await LocationService.wasLocationPermissionGranted();
-    
-    if (!wasGranted) {
-      // Show location permission dialog after a short delay
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
       await Future.delayed(const Duration(seconds: 1));
       if (mounted) {
         _showLocationPermissionDialog();
         return;
       }
     }
-    
     _proceedToMainApp();
   }
 
@@ -128,9 +180,17 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         message: 'This app needs location access to provide accurate prayer times and qibla direction for your current location.',
         onAllow: () async {
           Navigator.of(context).pop();
-          await LocationService.getCurrentLocation(forceRequest: true);
-          if (mounted) {
-            _proceedToMainApp();
+          // Request OS permission
+          LocationPermission permission = await Geolocator.requestPermission();
+          if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+            if (mounted) {
+              _proceedToMainApp();
+            }
+          } else {
+            // Permission still denied, stay on dialog or show a message
+            if (mounted) {
+              _showLocationPermissionDialog();
+            }
           }
         },
         onDeny: () {
@@ -240,6 +300,7 @@ class _MainScaffoldState extends State<MainScaffold> {
   bool _showAudioPlayer = false;
   Duration? _duration;
   Duration? _position;
+  int? _currentSurahIndex;
 
   @override
   void initState() {
@@ -278,7 +339,7 @@ class _MainScaffoldState extends State<MainScaffold> {
   }
 
   Future<void> _playAlFatiha() async {
-    setState(() { _showAudioPlayer = true; });
+    setState(() { _showAudioPlayer = true; _currentSurahIndex = 1; });
     try {
       await _audioPlayer.setAsset('assets/quran/001 Surah Al-Fatiha Sheikh noreen muhammad sadiq.mp3');
       await _audioPlayer.play();
@@ -292,7 +353,7 @@ class _MainScaffoldState extends State<MainScaffold> {
   }
 
   Future<void> _playSurah(int surahIndex) async {
-    setState(() { _showAudioPlayer = true; });
+    setState(() { _showAudioPlayer = true; _currentSurahIndex = surahIndex; });
     try {
       String? audioPath;
       if (surahIndex == 1) {
@@ -344,6 +405,14 @@ class _MainScaffoldState extends State<MainScaffold> {
   Widget build(BuildContext context) {
     final navProvider = Provider.of<BottomNavProvider>(context);
     final double translateY = _slideValue * (_hideDistance + 32); // 32 for shadow/extra
+    // Get surah name for AppleMusicPlayer
+    String surahName = 'الفاتحة';
+    String englishName = 'Al-Fatiha';
+    if (_currentSurahIndex != null) {
+      final surah = surahs.firstWhere((s) => s['index'] == _currentSurahIndex, orElse: () => surahs[0]);
+      surahName = surah['arabic'] ?? 'الفاتحة';
+      englishName = surah['english'] ?? 'Al-Fatiha';
+    }
     return Scaffold(
       body: Stack(
         children: [
@@ -402,8 +471,8 @@ class _MainScaffoldState extends State<MainScaffold> {
               right: 16,
               bottom: 105 - (_slideValue * 89),
               child: AppleMusicPlayer(
-                surahName: 'الفاتحة',
-                englishName: 'Al-Fatiha',
+                surahName: surahName,
+                englishName: englishName,
                 isPlaying: _isPlaying,
                 duration: _duration,
                 position: _position,

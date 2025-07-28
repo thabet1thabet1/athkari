@@ -3,14 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme.dart';
 import '../../data/verses.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:just_audio/just_audio.dart';
-import '../../ui/widgets/apple_music_player.dart';
 import '../../core/quran_download_service.dart';
-import '../../core/audio_manager.dart';
+import '../widgets/ayah_number_circle.dart';
 
 class QuranScreen extends StatefulWidget {
   final ScrollController? scrollController;
@@ -226,7 +225,7 @@ class _QuranScreenState extends State<QuranScreen> {
             right: 16,
             // Animate the player down as you scroll, then dock it in the nav bar's place
             bottom: 105 - (widget.slideValue * 89), // 105 (start) -> 16 (docked)
-            child: AppleMusicPlayer(
+            child: _AppleMusicPlayer(
               surahName: 'الفاتحة',
               englishName: 'Al-Fatiha',
               isPlaying: widget.isPlaying,
@@ -266,7 +265,7 @@ class _QuranTitleHeaderDelegate extends SliverPersistentHeaderDelegate {
             style: GoogleFonts.poppins(
               color: AppColors.forestGreen,
               fontWeight: FontWeight.bold,
-              fontSize: 28,
+              fontSize: 24,
             ),
             textAlign: TextAlign.center,
           ),
@@ -534,204 +533,6 @@ class _ToggleBtn extends StatelessWidget {
               fontWeight: selected ? FontWeight.bold : FontWeight.w500,
               fontSize: 16,
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _QuranListenMode extends StatefulWidget {
-  final ScrollController? scrollController;
-  const _QuranListenMode({this.scrollController});
-
-  @override
-  State<_QuranListenMode> createState() => _QuranListenModeState();
-}
-
-class _QuranListenModeState extends State<_QuranListenMode> {
-  String _selectedReciter = 'Al-Husary';
-  int? _playingSurahIndex;
-  bool _isPlaying = false;
-  String? _error;
-  bool _showPopup = false;
-
-  final List<Map<String, String>> reciters = [
-    {'name': 'Mashari Al Affasi', 'id': 'alafasy'},
-    {'name': 'Noreen Mohamed Al Siddiq', 'id': 'noreen'},
-  ];
-
-  void _pickReciter() async {
-    final picked = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: false,
-      builder: (context) {
-        return _ReciterPickerModal(
-          reciters: reciters,
-          selected: _selectedReciter,
-          onSelect: (name) => Navigator.of(context).pop(name),
-        );
-      },
-    );
-    if (picked != null && picked != _selectedReciter) {
-      setState(() => _selectedReciter = picked);
-    }
-  }
-
-  void _playSurah(int index) {
-    setState(() {
-      _playingSurahIndex = index;
-      _isPlaying = true;
-      _showPopup = true;
-    });
-    // TODO: Integrate audio playback
-  }
-
-  void _pause() {
-    setState(() => _isPlaying = false);
-  }
-
-  bool _isSurahValid(Map<String, dynamic> surah) {
-    return surah.containsKey('index') &&
-           surah.containsKey('arabic') &&
-           surah.containsKey('english') &&
-           surah['index'] != null &&
-           surah['arabic'] != null &&
-           surah['english'] != null;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    List<Map<String, dynamic>> validSurahs = surahs.where((s) => _isSurahValid(s)).toList();
-    String? error;
-    if (validSurahs.isEmpty) {
-      error = 'No valid surah data found.';
-    }
-    return Stack(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Add gap between search bar and reciter button
-              const SizedBox(height: 8),
-              // Reciter Picker Button
-              SizedBox(
-                height: 54,
-                child: ElevatedButton.icon(
-                  onPressed: _pickReciter,
-                  icon: const Icon(Icons.person, color: Colors.white, size: 20),
-                  label: Text('Reciter :  A0$_selectedReciter', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.forestGreen,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              // Surah List or Error
-              Expanded(
-                child: error != null
-                    ? Center(child: Text(error, style: const TextStyle(color: Colors.red, fontSize: 16)))
-                    : ListView.separated(
-                        controller: widget.scrollController,
-                        padding: const EdgeInsets.only(bottom: 160), // More space for popup and nav bar
-                        itemCount: validSurahs.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 8),
-                        itemBuilder: (context, idx) {
-                          final surah = validSurahs[idx];
-                          final isPlaying = _playingSurahIndex == surah['index'] && _isPlaying;
-                          return _SurahListenCard(
-                            arabic: surah['arabic'],
-                            english: surah['english'],
-                            index: surah['index'],
-                            showPlayButton: surah['index'] == 1,
-                            isPlaying: isPlaying,
-                            onPlay: surah['index'] == 1 ? () => _playSurah(surah['index']) : null,
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
-        ),
-        // Audio Player Bar (placeholder)
-        if (_playingSurahIndex != null && error == null && validSurahs.isNotEmpty)
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: _AudioPlayerBar(
-              surah: validSurahs.firstWhere((s) => s['index'] == _playingSurahIndex, orElse: () => validSurahs.first),
-              reciter: _selectedReciter,
-              isPlaying: _isPlaying,
-              onPause: _pause,
-              onPlay: () => _playSurah(_playingSurahIndex!),
-            ),
-          ),
-        if (_showPopup && _playingSurahIndex == 1 && _selectedReciter == 'Noreen Mohamed Al Siddiq')
-          QuranAudioPlayerPopup(
-            surahName: validSurahs.firstWhere((s) => s['index'] == 1)['arabic'],
-            surahIndex: 1,
-            reciterId: 'noreen',
-            onClose: () => setState(() => _showPopup = false),
-            onNext: null, // implement next if needed
-          ),
-      ],
-    );
-  }
-}
-
-class _ReciterSwitch extends StatelessWidget {
-  final List<Map<String, String>> reciters;
-  final String selected;
-  final ValueChanged<String> onChanged;
-  const _ReciterSwitch({required this.reciters, required this.selected, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          height: 44,
-          decoration: BoxDecoration(
-            color: Colors.white.withAlpha(80),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppColors.forestGreen.withOpacity(0.13)),
-          ),
-          child: Row(
-            children: reciters.map((r) {
-              final isSelected = selected == r['name'];
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => onChanged(r['name']!),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeInOut,
-                    decoration: BoxDecoration(
-                      color: isSelected ? AppColors.forestGreen.withOpacity(0.13) : Colors.transparent,
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      r['name']!,
-                      style: GoogleFonts.poppins(
-                        color: isSelected ? AppColors.forestGreen : Colors.black.withOpacity(0.6),
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
           ),
         ),
       ),
@@ -1418,8 +1219,17 @@ class _QuranPageViewState extends State<QuranPageView> {
         displayAyahs[0]['text'] = words.sublist(4).join(' ').trimLeft();
       }
     }
+    // Renumber ayahs after Basmala removal so numbering is always 1, 2, 3, ...
+    if (displayAyahs != null) {
+      for (int i = 0; i < displayAyahs.length; i++) {
+        displayAyahs[i]['numberInSurah'] = i + 1;
+        // Remove any trailing ayah number markers from the text (e.g., ﴿1﴾)
+        displayAyahs[i]['text'] = (displayAyahs[i]['text'] as String)
+          .replaceAll(RegExp(r'﴿\d+﴾'), '').trim();
+      }
+    }
     // Remove Quranic stop signs (waqf symbols) from ayah text
-    final waqfRegex = RegExp(r'[۞۩۝ۚۛۗۖۙۘۜ۝۞ۣ۟۠ۡۢۤۥۦۧۨ۩۪ۭ۫۬ۮۯ۰۱۲۳۴۵۶۷۸۹ۺۻۼ۽۾ۿ]');
+    final waqfRegex = RegExp(r'[۞۝ۚۛۗۖۙۘۜ۝۞ۣ۟۠ۡۢۤۥۦ۪ۭۧۨ۫۬ۮۯ۰۱۲۳۴۵۶۷۸۹ۺۻۼ۽۾ۿ]'); // REMOVED ۩
     if (displayAyahs != null) {
       for (var ayah in displayAyahs) {
         if (ayah['text'] != null) {
@@ -1577,6 +1387,7 @@ class _QuranPageViewState extends State<QuranPageView> {
                                         textDirection: TextDirection.rtl,
                                         child: RichText(
                                           textAlign: TextAlign.center,
+                                          textDirection: TextDirection.rtl,
                                           text: TextSpan(
                                             style: TextStyle(
                                               fontFamily: 'UthmanicHafs',
@@ -1587,15 +1398,23 @@ class _QuranPageViewState extends State<QuranPageView> {
                                             ),
                                             children: [
                                               for (int i = 0; i < displayAyahs.length; i++) ...[
-                                                TextSpan(text: displayAyahs[i]['text'] + ' '),
+                                                TextSpan(
+                                                  text: (displayAyahs[i]['text'] as String).trim() + ' ',
+                                                ),
                                                 WidgetSpan(
                                                   alignment: PlaceholderAlignment.middle,
                                                   child: Padding(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 2.5),
-                                                    child: _AyahSeparatorWidget(ayahNumber: displayAyahs[i]['numberInSurah']),
+                                                    padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                                                    child: Image.asset(
+                                                      // For now, use the same image for all ayahs. To use per-ayah images, change the path to:
+                                                      // 'lib/images/ayah_${displayAyahs[i]['numberInSurah']}.png',
+                                                      'lib/images/ayah_seperator.png',
+                                                      height: 28, // Adjust to match text size
+                                                      fit: BoxFit.contain,
+                                                    ),
                                                   ),
                                                 ),
-                                                const TextSpan(text: ' '),
+                                                const TextSpan(text: ' '), // space after image
                                               ],
                                             ],
                                           ),
@@ -1623,166 +1442,7 @@ class _AyahSeparatorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 38,
-      height: 38,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Image.asset(
-            'lib/images/ayah_seperator.png',
-            width: 38,
-            height: 38,
-            fit: BoxFit.contain,
-          ),
-          Positioned(
-            child: Text(
-              '$ayahNumber',
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF18824B),
-                fontSize: 12,
-                shadows: [
-                  Shadow(
-                    color: Colors.white,
-                    blurRadius: 2,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Reciter Picker Modal styled like Khatmah modal
-class _ReciterPickerModal extends StatelessWidget {
-  final List<Map<String, String>> reciters;
-  final String selected;
-  final ValueChanged<String> onSelect;
-  const _ReciterPickerModal({required this.reciters, required this.selected, required this.onSelect});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.black.withOpacity(0.18),
-      child: Center(
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-            child: Container(
-              width: 340,
-              padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
-              decoration: BoxDecoration(
-                color: Colors.white.withAlpha(240),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.grey.withOpacity(0.10)),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Pick a Reciter',
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 21,
-                      color: Colors.black.withOpacity(0.85),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  ...reciters.map((r) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _ReciterOptionCard(
-                          label: r['name']!,
-                          selected: selected == r['name'],
-                          onTap: () => onSelect(r['name']!),
-                        ),
-                      )),
-                  const SizedBox(height: 28),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF18824B),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        'Close',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ReciterOptionCard extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _ReciterOptionCard({required this.label, required this.selected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
-        decoration: BoxDecoration(
-          color: selected ? Colors.green[50] : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: selected ? const Color(0xFF18824B) : Colors.grey[200]!, width: 2),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.07),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              label,
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                color: Colors.black.withOpacity(0.85),
-                fontSize: 16,
-              ),
-            ),
-            if (selected)
-              Container(
-                width: 18,
-                height: 18,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF18824B),
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: const SizedBox(),
-              ),
-          ],
-        ),
-      ),
-    );
+    return AyahNumberCircle(number: ayahNumber);
   }
 }
 
@@ -1950,4 +1610,28 @@ class _QuranAudioPlayerPopupState extends State<QuranAudioPlayerPopup> {
       ),
     );
   }
+} 
+
+List<InlineSpan> _buildAyahWithSajda(String text, Color color) {
+  const sajdaChar = '۩';
+  final parts = text.split(sajdaChar);
+  List<InlineSpan> spans = [];
+  for (int i = 0; i < parts.length; i++) {
+    if (parts[i].isNotEmpty) {
+      spans.add(TextSpan(text: parts[i]));
+    }
+    if (i != parts.length - 1) {
+      spans.add(TextSpan(
+        text: sajdaChar,
+        style: TextStyle(
+          fontSize: 36, // Larger than ayah text
+          color: color,
+          fontWeight: FontWeight.bold,
+          height: 1.0,
+          fontFamily: 'UthmanicHafs',
+        ),
+      ));
+    }
+  }
+  return spans;
 } 

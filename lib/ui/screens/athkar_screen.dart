@@ -30,7 +30,7 @@ class AthkarScreen extends StatelessWidget {
     return Column(
       children: [
         AppBar(
-          title: Text('Athkar', style: GoogleFonts.poppins(color: AppColors.forestGreen, fontWeight: FontWeight.bold)),
+          title: Text('Athkar', style: GoogleFonts.poppins(color: AppColors.forestGreen, fontWeight: FontWeight.bold, fontSize: 24)),
           automaticallyImplyLeading: false,
           backgroundColor: Colors.transparent,
           elevation: 0,

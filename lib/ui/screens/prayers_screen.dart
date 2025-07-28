@@ -14,7 +14,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../main.dart' as main_app show AppBackground;
 import 'package:geocoding/geocoding.dart';
-
+import '../../core/notification_service.dart';
 import 'qibla_screen.dart';
 
 // Top-level function for calculation method selection
@@ -52,6 +52,31 @@ class PrayersScreen extends StatefulWidget {
 
   @override
   State<PrayersScreen> createState() => _PrayersScreenState();
+}
+
+// Helper widget for circular icon buttons
+class _CircleIconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final Color? iconColor;
+  const _CircleIconButton({required this.icon, required this.onTap, this.iconColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.grey[100],
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: SizedBox(
+          width: 28,
+          height: 28,
+          child: Icon(icon, size: 16, color: iconColor ?? Colors.grey[700]),
+        ),
+      ),
+    );
+  }
 }
 
 class _PrayersScreenState extends State<PrayersScreen> {
@@ -298,12 +323,47 @@ class _PrayersScreenState extends State<PrayersScreen> {
     }
   }
 
-  void _toggleNotification(int idx) {
+  void _toggleNotification(int idx) async {
     if (mounted) {
       setState(() {
         _prayerTimes[idx].notificationEnabled = !_prayerTimes[idx].notificationEnabled;
-        // TODO: Schedule/cancel notification using flutter_local_notifications
       });
+      final pt = _prayerTimes[idx];
+      final id = idx + 1; // Unique ID per prayer
+      if (pt.notificationEnabled) {
+        await NotificationService.schedulePrayerNotification(
+          id: id,
+          title: "It's time for ${pt.name}",
+          body: 'Time to pray ${pt.name}.',
+          scheduledTime: getEffectivePrayerTime(idx),
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${pt.name} notification enabled'),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: Colors.black.withOpacity(0.85),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        await NotificationService.cancelNotification(id);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${pt.name} notification disabled'),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: Colors.black.withOpacity(0.85),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
     }
   }
 
@@ -367,111 +427,135 @@ class _PrayersScreenState extends State<PrayersScreen> {
               builder: (context, setStateDialog) {
                 return Dialog(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-                  backgroundColor: Colors.white,
+                  backgroundColor: const Color(0xFFF8FAF8), // Soft background
                   child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+                    width: MediaQuery.of(context).size.width * 0.92, // Wider dialog
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Center(
-                          child: Text(
-                            'Manual Settings',
-                            style: GoogleFonts.poppins(
-                              color: Colors.grey[700],
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                            ),
+                        Text(
+                          'Manual Settings',
+                          style: GoogleFonts.poppins(
+                            color: Colors.grey[800],
+                            fontWeight: FontWeight.bold,
+                            fontSize: 22,
                           ),
                         ),
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 24),
                         ...List.generate(_prayerTimes.length, (i) {
                           final pt = _prayerTimes[i];
                           final adjustedTime = pt.time.add(Duration(minutes: manualOffsets[i]));
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              child: Row(
-                                children: [
-                                  Icon(pt.icon, color: AppColors.forestGreen, size: 24),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      pt.name,
-                                      style: GoogleFonts.poppins(
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 16,
+                          return Column(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(18),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black12,
+                                      blurRadius: 4,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        pt.name,
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 15,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  Text(
-                                    timeFormat.format(adjustedTime),
-                                    style: GoogleFonts.poppins(
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 15,
+                                    Text(
+                                      timeFormat.format(adjustedTime),
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  IconButton(
-                                    icon: Icon(Icons.remove_circle_outline, color: Colors.grey[600]),
-                                    onPressed: () async {
-                                      setStateDialog(() {
-                                        manualOffsets[i]--;
-                                      });
-                                      await prefs.setInt('prayer_offset_$i', manualOffsets[i]);
-                                    },
-                                  ),
-                                  IconButton(
-                                    icon: Icon(Icons.add_circle_outline, color: Colors.grey[600]),
-                                    onPressed: () async {
-                                      setStateDialog(() {
-                                        manualOffsets[i]++;
-                                      });
-                                      await prefs.setInt('prayer_offset_$i', manualOffsets[i]);
-                                    },
-                                  ),
-                                ],
+                                    const SizedBox(width: 10),
+                                    _CircleIconButton(
+                                      icon: Icons.remove,
+                                      onTap: () async {
+                                        setStateDialog(() {
+                                          manualOffsets[i]--;
+                                        });
+                                        await prefs.setInt('prayer_offset_$i', manualOffsets[i]);
+                                      },
+                                    ),
+                                    const SizedBox(width: 6),
+                                    _CircleIconButton(
+                                      icon: Icons.add,
+                                      onTap: () async {
+                                        setStateDialog(() {
+                                          manualOffsets[i]++;
+                                        });
+                                        await prefs.setInt('prayer_offset_$i', manualOffsets[i]);
+                                      },
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
+                              if (i != _prayerTimes.length - 1)
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                                  child: Divider(height: 1, thickness: 0.5, color: Color(0xFFB2C2B9)),
+                                ),
+                            ],
                           );
                         }),
-                        const SizedBox(height: 8),
-                        Center(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.forestGreen,
-                              borderRadius: BorderRadius.circular(18),
+                        const SizedBox(height: 28),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              setState(() {
+                                _manualOffsets = List<int>.from(manualOffsets);
+                              });
+                              for (int i = 0; i < _prayerTimes.length; i++) {
+                                if (_prayerTimes[i].notificationEnabled) {
+                                  await NotificationService.schedulePrayerNotification(
+                                    id: i + 1,
+                                    title: "It's time for  {_prayerTimes[i].name}",
+                                    body: 'Time to pray  {_prayerTimes[i].name}.',
+                                    scheduledTime: _prayerTimes[i].time.add(Duration(minutes: manualOffsets[i])),
+                                  );
+                                }
+                              }
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Prayer notifications updated to manual times'),
+                                    behavior: SnackBarBehavior.floating,
+                                    backgroundColor: Colors.black.withOpacity(0.85),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                              Navigator.of(context).pop();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              shape: StadiumBorder(),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              backgroundColor: AppColors.forestGreen,
+                              elevation: 2,
                             ),
-                            child: TextButton(
-                              onPressed: () {
-                                // Save and update main list with manual offsets
-                                setState(() {
-                                  _manualOffsets = List<int>.from(manualOffsets);
-                                });
-                                Navigator.of(context).pop();
-                              },
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(18),
-                                ),
-                              ),
-                              child: Text(
-                                'Close',
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
+                            child: Text(
+                              'Close',
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
                               ),
                             ),
                           ),
@@ -519,7 +603,7 @@ class _PrayersScreenState extends State<PrayersScreen> {
               );
             },
           ),
-          title: Text('Prayers', style: GoogleFonts.poppins(color: AppColors.forestGreen, fontWeight: FontWeight.bold)),
+          title: Text('Prayers', style: GoogleFonts.poppins(color: AppColors.forestGreen, fontWeight: FontWeight.bold, fontSize: 24)),
           automaticallyImplyLeading: false,
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -969,46 +1053,47 @@ class _QiyamMidnightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(20),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Icon(icon, color: AppColors.forestGreen, size: 24),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                label,
-                style: GoogleFonts.poppins(
-                  color: Colors.black,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-            Text(
-              time,
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE6F4EC),
+        borderRadius: BorderRadius.circular(38),
+        border: Border.all(color: AppColors.forestGreen.withOpacity(0.10), width: 2), // Green frame like prayer cards
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.forestGreen, size: 24), // No circle, just green icon
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              label,
               style: GoogleFonts.poppins(
                 color: Colors.black,
-                fontWeight: FontWeight.w500,
-                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
               ),
             ),
-            const SizedBox(width: 8),
-            IconButton(
-              icon: Icon(
-                notificationEnabled ? Icons.notifications_active : Icons.notifications_none,
-                color: notificationEnabled ? AppColors.forestGreen : Colors.grey[600],
-              ),
-              onPressed: onBellTap,
+          ),
+          Text(
+            time,
+            style: GoogleFonts.poppins(
+              color: Colors.black,
+              fontWeight: FontWeight.w500, // Slightly bolder
+              fontSize: 16,
             ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 16),
+          IconButton(
+            icon: Icon(
+              notificationEnabled ? Icons.notifications_active : Icons.notifications_none,
+              color: notificationEnabled ? AppColors.forestGreen : Colors.grey[500],
+              size: 24, // Make bell bigger
+            ),
+            onPressed: onBellTap,
+            splashRadius: 24,
+          ),
+        ],
       ),
     );
   }
@@ -1024,76 +1109,158 @@ class _QiyamMidnightDialogContentState extends State<_QiyamMidnightDialogContent
   bool midnightNotif = false;
 
   @override
+  void initState() {
+    super.initState();
+    _loadPrefs();
+  }
+
+  Future<void> _loadPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      qiyamNotif = prefs.getBool('qiyam_notif') ?? false;
+      midnightNotif = prefs.getBool('midnight_notif') ?? false;
+    });
+  }
+
+  Future<void> _toggleQiyamNotif() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      qiyamNotif = !qiyamNotif;
+    });
+    await prefs.setBool('qiyam_notif', qiyamNotif);
+    if (qiyamNotif) {
+      await NotificationService.schedulePrayerNotification(
+        id: 200,
+        title: "It's time for Qiyam",
+        body: 'Time for Qiyam prayer.',
+        scheduledTime: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, 1, 9),
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Qiyam notification enabled'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.black.withOpacity(0.85),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } else {
+      await NotificationService.cancelNotification(200);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Qiyam notification disabled'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.black.withOpacity(0.85),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _toggleMidnightNotif() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      midnightNotif = !midnightNotif;
+    });
+    await prefs.setBool('midnight_notif', midnightNotif);
+    if (midnightNotif) {
+      await NotificationService.schedulePrayerNotification(
+        id: 201,
+        title: "It's time for Midnight",
+        body: 'Time for Midnight prayer.',
+        scheduledTime: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, 23, 52),
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Midnight notification enabled'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.black.withOpacity(0.85),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } else {
+      await NotificationService.cancelNotification(201);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Midnight notification disabled'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.black.withOpacity(0.85),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8FAF8), // Soft background
       child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+        width: MediaQuery.of(context).size.width * 0.99, // Even wider dialog
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Text(
-                'Qiyam & Midnight',
-                style: GoogleFonts.poppins(
-                  color: Colors.grey[700],
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
+            Text(
+              'Qiyam & Midnight',
+              style: GoogleFonts.poppins(
+                color: Colors.grey[800],
+                fontWeight: FontWeight.bold,
+                fontSize: 22,
               ),
             ),
-            const SizedBox(height: 18),
-            // Qiyam Card
+            const SizedBox(height: 24),
             _QiyamMidnightCard(
               label: 'Qiyam',
               icon: Icons.nightlight_round,
               time: '1:09',
               notificationEnabled: qiyamNotif,
-              onBellTap: () {
-                setState(() {
-                  qiyamNotif = !qiyamNotif;
-                });
-              },
+              onBellTap: _toggleQiyamNotif,
             ),
-            const SizedBox(height: 12),
-            // Midnight Card
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.0),
+              child: Divider(height: 1, thickness: 0.5, color: Color(0xFFB2C2B9)),
+            ),
             _QiyamMidnightCard(
               label: 'Midnight',
               icon: Icons.nights_stay,
               time: '11:52',
               notificationEnabled: midnightNotif,
-              onBellTap: () {
-                setState(() {
-                  midnightNotif = !midnightNotif;
-                });
-              },
+              onBellTap: _toggleMidnightNotif,
             ),
-            const SizedBox(height: 18),
-            Center(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.forestGreen,
-                  borderRadius: BorderRadius.circular(18),
+            const SizedBox(height: 28),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: ElevatedButton.styleFrom(
+                  shape: StadiumBorder(),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: AppColors.forestGreen,
+                  elevation: 2,
                 ),
-                child: TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                  ),
-                  child: Text(
-                    'Close',
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+                child: Text(
+                  'Close',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
                   ),
                 ),
               ),
@@ -1153,6 +1320,16 @@ class _MonthlyPrayerCalendarPageState extends State<MonthlyPrayerCalendarPage> {
         ..hDay = 1;
       DateTime firstDay = hijri.hijriToGregorian(_hijriYear, _hijriMonth, 1);
       int daysInMonth = hijri.getDaysInMonth(_hijriYear, _hijriMonth);
+      // Load manual offsets
+      final prefs = await SharedPreferences.getInstance();
+      final List<int> manualOffsets = [
+        prefs.getInt('prayer_offset_0') ?? 0,
+        prefs.getInt('prayer_offset_1') ?? 0,
+        prefs.getInt('prayer_offset_2') ?? 0,
+        prefs.getInt('prayer_offset_3') ?? 0,
+        prefs.getInt('prayer_offset_4') ?? 0,
+      ];
+      final List<String> prayerOrder = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
       List<List<PrayerTime>> monthTimes = [];
       for (int i = 0; i < daysInMonth; i++) {
         DateTime day = firstDay.add(Duration(days: i));
@@ -1163,20 +1340,57 @@ class _MonthlyPrayerCalendarPageState extends State<MonthlyPrayerCalendarPage> {
           if (response.statusCode == 200) {
             final data = json.decode(response.body);
             final timings = data['data']['timings'];
-            monthTimes.add([
-              if (timings['Fajr'] != null)
-                PrayerTime(name: 'Fajr', icon: Icons.nightlight_round, time: _parseTimeStringForCalendar(timings['Fajr'], day)),
-              if (timings['Sunrise'] != null)
-                PrayerTime(name: 'Sunrise', icon: Icons.wb_sunny, time: _parseTimeStringForCalendar(timings['Sunrise'], day)),
-              if (timings['Dhuhr'] != null)
-                PrayerTime(name: 'Dhuhr', icon: Icons.wb_sunny_outlined, time: _parseTimeStringForCalendar(timings['Dhuhr'], day)),
-              if (timings['Asr'] != null)
-                PrayerTime(name: 'Asr', icon: Icons.wb_twilight, time: _parseTimeStringForCalendar(timings['Asr'], day)),
-              if (timings['Maghrib'] != null)
-                PrayerTime(name: 'Maghrib', icon: Icons.nights_stay, time: _parseTimeStringForCalendar(timings['Maghrib'], day)),
-              if (timings['Isha'] != null)
-                PrayerTime(name: 'Isha', icon: Icons.nightlight_round, time: _parseTimeStringForCalendar(timings['Isha'], day)),
-            ]);
+            // Build the list and apply manual offsets
+            final List<PrayerTime> dayPrayers = [];
+            int offsetIdx = 0;
+            if (timings['Fajr'] != null) {
+              dayPrayers.add(PrayerTime(
+                name: 'Fajr',
+                icon: Icons.nightlight_round,
+                time: _parseTimeStringForCalendar(timings['Fajr'], day).add(Duration(minutes: manualOffsets[0])),
+              ));
+              offsetIdx++;
+            }
+            if (timings['Sunrise'] != null) {
+              dayPrayers.add(PrayerTime(
+                name: 'Sunrise',
+                icon: Icons.wb_sunny,
+                time: _parseTimeStringForCalendar(timings['Sunrise'], day),
+              ));
+            }
+            if (timings['Dhuhr'] != null) {
+              dayPrayers.add(PrayerTime(
+                name: 'Dhuhr',
+                icon: Icons.wb_sunny_outlined,
+                time: _parseTimeStringForCalendar(timings['Dhuhr'], day).add(Duration(minutes: manualOffsets[1])),
+              ));
+              offsetIdx++;
+            }
+            if (timings['Asr'] != null) {
+              dayPrayers.add(PrayerTime(
+                name: 'Asr',
+                icon: Icons.wb_twilight,
+                time: _parseTimeStringForCalendar(timings['Asr'], day).add(Duration(minutes: manualOffsets[2])),
+              ));
+              offsetIdx++;
+            }
+            if (timings['Maghrib'] != null) {
+              dayPrayers.add(PrayerTime(
+                name: 'Maghrib',
+                icon: Icons.nights_stay,
+                time: _parseTimeStringForCalendar(timings['Maghrib'], day).add(Duration(minutes: manualOffsets[3])),
+              ));
+              offsetIdx++;
+            }
+            if (timings['Isha'] != null) {
+              dayPrayers.add(PrayerTime(
+                name: 'Isha',
+                icon: Icons.nightlight_round,
+                time: _parseTimeStringForCalendar(timings['Isha'], day).add(Duration(minutes: manualOffsets[4])),
+              ));
+              offsetIdx++;
+            }
+            monthTimes.add(dayPrayers);
           } else {
             monthTimes.add([]);
           }

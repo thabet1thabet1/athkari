@@ -35,6 +35,8 @@
 - **Quran**  
   - Read and listen to the Quran with Uthmani script and audio recitation.
   - Surah navigation, search, and Khatmah (completion) tracking.
+  - **Download Surah recitations by Sheikh Noreen** for offline listening.
+  - **Beautiful Quranic Duas** section for easy access to supplications from the Quran.
 
 - **Prayer Times**  
   - Accurate daily prayer times based on your location.
