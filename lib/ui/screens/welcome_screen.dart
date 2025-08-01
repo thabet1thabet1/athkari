@@ -82,7 +82,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                           Container(
                             width: double.infinity,
                             child: Text(
-                              'هذا التطبيق غير ربحي بالكامل، ولا يحتوي على أي إعلانات أو مصادر للربح. تم تطويره بالكامل من قِبل ثابت شارف خوجة، ونُشر من قِبل [اسم] كصدقة جارية نرجو أن ينفعنا الله بها في دنيانا وآخرتنا.',
+                              'هذا التطبيق غير ربحي بالكامل، ولا يحتوي على أي إعلانات أو مصادر للربح. تم تطويره بالكامل من قِبل ثابت شارف خوجة، ونُشر من قِبل احمد السيد كصدقة جارية نرجو أن ينفعنا الله بها في دنيانا وآخرتنا.',
                               style: GoogleFonts.cairo(
                                 fontSize: 22,
                                 height: 1.8,
@@ -97,7 +97,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                           Container(
                             width: double.infinity,
                             child: Text(
-                              'This application is entirely non-profit, with no advertisements or sources of income. It was fully developed by Thabet Charef Khodja and published by [Name] as a form of ongoing charity (sadaqah jariyah). We pray that Allah allows it to benefit us in our dunya and akhirah.',
+                              'This application is entirely non-profit, with no advertisements or sources of income. It was fully developed by Thabet Charef Khodja and published by Ahmed Elsayed as a form of ongoing charity (sadaqah jariyah). We pray that Allah allows it to benefit us in our dunya and akhirah.',
                               style: GoogleFonts.poppins(
                                 fontSize: 20,
                                 height: 1.6,
