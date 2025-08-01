@@ -203,13 +203,14 @@ class QuranDownloadService {
         return false;
       }
       // Get app documents directory
-      final appDir = await getApplicationDocumentsDirectory();
-      final downloadsDir = Directory('${appDir.path}/$_downloadsFolder');
+      final directory = await getApplicationDocumentsDirectory();
+      final downloadsDir = Directory('${directory.path}/$_downloadsFolder');
       if (!await downloadsDir.exists()) {
         await downloadsDir.create(recursive: true);
       }
-      final fileName = '${surahIndex.toString().padLeft(3, '0')}_$surahNameEnglish.mp3';
+      final fileName = '${surahIndex.toString().padLeft(3, '0')}.mp3';
       final filePath = '${downloadsDir.path}/$fileName';
+      final relativePath = '$_downloadsFolder/$fileName';
       final dioInstance = Dio();
       
       // Download with progress tracking
@@ -232,8 +233,13 @@ class QuranDownloadService {
         return false;
       }
       
-      // Save download record
-      await _saveDownloadRecord(surahIndex, filePath, surahName, surahNameEnglish);
+      // Save download record with relative path
+      await _saveDownloadRecord(
+        surahIndex,
+        relativePath, // Save the relative path
+        surahName,
+        surahNameEnglish,
+      );
       
       // Show success dialog
       _showSuccessDialog(context, surahName, surahNameEnglish);
@@ -328,14 +334,19 @@ class QuranDownloadService {
       }
       final prefs = await SharedPreferences.getInstance();
       final downloads = prefs.getStringList(_downloadsKey) ?? [];
-      for (final download in downloads) {
-        final parts = download.split('|');
-        if (parts.length >= 2 && parts[0] == surahIndex.toString()) {
-          return parts[1];
-        }
+      final record = downloads.firstWhere(
+        (rec) => rec.startsWith('$surahIndex|'),
+        orElse: () => '',
+      );
+      if (record.isNotEmpty) {
+        // The record is 'surahIndex|relativePath|surahName|surahNameEnglish'
+        final relativePath = record.split('|')[1];
+        final directory = await getApplicationDocumentsDirectory();
+        return '${directory.path}/$relativePath';
       }
       return null;
     } catch (e) {
+      print('Error getting surah file path: $e');
       return null;
     }
   }

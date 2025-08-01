@@ -18,13 +18,14 @@ class QuranScreen extends StatefulWidget {
   final bool isPlaying;
   final Duration? duration;
   final Duration? position;
+  final int? currentlyPlayingSurah;
   final VoidCallback onPlayAlFatiha;
   final Function(int) onPlaySurah;
   final VoidCallback onPlayPause;
   final VoidCallback onStopAudio;
   final ValueChanged<double> onSeekAudio;
   const QuranScreen({super.key, this.scrollController, required this.slideValue,
-    required this.showAudioPlayer, required this.isPlaying, required this.duration, required this.position,
+    required this.showAudioPlayer, required this.isPlaying, required this.duration, required this.position, required this.currentlyPlayingSurah,
     required this.onPlayAlFatiha, required this.onPlaySurah, required this.onPlayPause, required this.onStopAudio, required this.onSeekAudio});
 
   @override
@@ -190,19 +191,17 @@ class _QuranScreenState extends State<QuranScreen> {
                 SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, idx) {
-                      final surah = filteredSurahs[idx];
-                      // Only show play button for Al-Fatiha (index 1)
-                      final showPlayButton = surah['index'] == 1;
+                      final s = filteredSurahs[idx];
                       return Padding(
                         padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
                         child: _SurahListenCard(
-                          arabic: surah['arabic'],
-                          english: surah['english'],
-                          index: surah['index'],
-                          showPlayButton: showPlayButton,
-                          isPlaying: widget.showAudioPlayer && surah['index'] == 1 && widget.isPlaying,
-                          onPlay: showPlayButton ? widget.onPlayAlFatiha : null,
+                          index: s['index'],
+                          arabic: s['arabic'],
+                          english: s['english'],
+                          onPlay: s['index'] == 1 ? widget.onPlayAlFatiha : null,
                           onPlaySurah: widget.onPlaySurah,
+                          isPlaying: widget.isPlaying && widget.currentlyPlayingSurah == s['index'],
+                          showPlayButton: s['index'] == 1 || (widget.currentlyPlayingSurah == s['index']),
                         ),
                       );
                     },

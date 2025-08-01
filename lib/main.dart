@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/theme.dart';
-import 'core/location_service.dart';
 import 'ui/screens/athkar_screen.dart';
 import 'ui/screens/quran_screen.dart';
 import 'ui/screens/prayers_screen.dart';
@@ -145,7 +144,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   Future<void> _checkFirstTimeAndLocation() async {
     final prefs = await SharedPreferences.getInstance();
     _isFirstTime = prefs.getBool('has_seen_welcome') != true;
-
+    
     // Check actual OS permission
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
@@ -183,8 +182,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           // Request OS permission
           LocationPermission permission = await Geolocator.requestPermission();
           if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
-            if (mounted) {
-              _proceedToMainApp();
+          if (mounted) {
+            _proceedToMainApp();
             }
           } else {
             // Permission still denied, stay on dialog or show a message
@@ -300,7 +299,8 @@ class _MainScaffoldState extends State<MainScaffold> {
   bool _showAudioPlayer = false;
   Duration? _duration;
   Duration? _position;
-  int? _currentSurahIndex;
+  int? _currentSurahIndex; // To track which surah is playing
+  int? get currentlyPlayingSurah => _currentSurahIndex;
 
   @override
   void initState() {
@@ -314,7 +314,12 @@ class _MainScaffoldState extends State<MainScaffold> {
       if (mounted) setState(() => _duration = dur);
     });
     _audioPlayer.playerStateStream.listen((state) {
-      if (mounted) setState(() => _isPlaying = state.playing);
+      if (!mounted) return;
+      setState(() => _isPlaying = state.playing);
+      if (state.processingState == ProcessingState.completed) {
+        _audioPlayer.seek(Duration.zero);
+        _audioPlayer.pause();
+      }
     });
   }
 
@@ -353,14 +358,12 @@ class _MainScaffoldState extends State<MainScaffold> {
   }
 
   Future<void> _playSurah(int surahIndex) async {
-    setState(() { _showAudioPlayer = true; _currentSurahIndex = surahIndex; });
+    setState(() {
+      _showAudioPlayer = true;
+      _currentSurahIndex = surahIndex;
+    });
     try {
-      String? audioPath;
-      if (surahIndex == 1) {
-        audioPath = 'assets/quran/001 Surah Al-Fatiha Sheikh noreen muhammad sadiq.mp3';
-      } else {
-        audioPath = await QuranDownloadService.getSurahFilePath(surahIndex);
-      }
+      final audioPath = await QuranDownloadService.getSurahFilePath(surahIndex);
       if (audioPath == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -369,6 +372,7 @@ class _MainScaffoldState extends State<MainScaffold> {
         }
         return;
       }
+
       if (audioPath.startsWith('assets/')) {
         await _audioPlayer.setAsset(audioPath);
       } else {
@@ -428,6 +432,7 @@ class _MainScaffoldState extends State<MainScaffold> {
               isPlaying: _isPlaying,
               duration: _duration,
               position: _position,
+              currentlyPlayingSurah: _currentSurahIndex,
               onPlayAlFatiha: _playAlFatiha,
               onPlaySurah: _playSurah,
               onPlayPause: _togglePlayPause,

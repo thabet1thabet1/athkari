@@ -265,8 +265,6 @@ class _PrayersScreenState extends State<PrayersScreen> {
     return localTime;
   }
 
-
-
   Future<void> _loadManualOffsets() async {
     final prefs = await SharedPreferences.getInstance();
     final offsets = List<int>.generate(_prayerTimes.length, (i) => prefs.getInt('prayer_offset_$i') ?? 0);
@@ -524,8 +522,8 @@ class _PrayersScreenState extends State<PrayersScreen> {
                                 if (_prayerTimes[i].notificationEnabled) {
                                   await NotificationService.schedulePrayerNotification(
                                     id: i + 1,
-                                    title: "It's time for  {_prayerTimes[i].name}",
-                                    body: 'Time to pray  {_prayerTimes[i].name}.',
+                                    title: "It's time for ${_prayerTimes[i].name}",
+                                    body: 'Time to pray ${_prayerTimes[i].name}.',
                                     scheduledTime: _prayerTimes[i].time.add(Duration(minutes: manualOffsets[i])),
                                   );
                                 }
@@ -947,10 +945,10 @@ class _PrayersScreenState extends State<PrayersScreen> {
     final m = d.inMinutes % 60;
     final s = d.inSeconds % 60;
     if (h > 0) {
-      return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}'
-;    }
-    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}'
-;  }
+      return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+    }
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
 }
 
 class _ActionPillButton extends StatelessWidget {
@@ -981,7 +979,7 @@ class _ActionPillButton extends StatelessWidget {
               const SizedBox(width: 7),
               Text(
                 label,
-          style: GoogleFonts.poppins(
+                style: GoogleFonts.poppins(
                   color: forestGreen,
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
@@ -1545,4 +1543,4 @@ class QiblaPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return const QiblaScreen();
   }
-} 
+}
