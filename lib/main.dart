@@ -37,8 +37,8 @@ Future<void> rescheduleAllPrayerNotifications() async {
     if (enabled && time != null) {
       await NotificationService.schedulePrayerNotification(
         id: i + 1,
-        title: "It's time for ${prayerNames[i]}",
-        body: 'Time to pray ${prayerNames[i]}.',
+        title: "It's time for ${prayerNames[i]} prayer",
+        body: 'The time for ${prayerNames[i]} prayer has arrived. May your prayers be accepted.',
         scheduledTime: time.add(Duration(minutes: offset)),
       );
     }
@@ -51,22 +51,22 @@ void main() async {
   // Schedule daily athkar notifications
   await NotificationService.scheduleAthkarNotification(
     id: 100,
-    title: 'Morning Athkar',
-    body: 'Remember to recite your morning athkar.',
+    title: 'Time for Morning Athkar',
+    body: 'Start your day with the remembrance of Allah. Recite your morning athkar.',
     hour: 5,
     minute: 50,
   );
   await NotificationService.scheduleAthkarNotification(
     id: 101,
-    title: 'Evening Athkar',
-    body: 'Remember to recite your evening athkar.',
+    title: 'Time for Evening Athkar',
+    body: 'End your day with the remembrance of Allah. Recite your evening athkar.',
     hour: 17,
     minute: 30,
   );
   await NotificationService.scheduleAthkarNotification(
     id: 102,
-    title: 'Sleep Athkar',
-    body: 'Remember to recite your sleep athkar.',
+    title: 'Time for Sleep Athkar',
+    body: 'Before you sleep, remember Allah. Recite your sleep athkar for a peaceful night.',
     hour: 22,
     minute: 0,
   );

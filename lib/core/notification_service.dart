@@ -1,7 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tzData;
-import 'package:flutter/material.dart';
+
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 
 class NotificationService {
@@ -29,12 +29,13 @@ class NotificationService {
   }) async {
     await _notifications.zonedSchedule(
       id,
+      'athkari',
       title,
-      body,
       tz.TZDateTime.from(scheduledTime, tz.local),
-      const NotificationDetails(
+      NotificationDetails(
         android: AndroidNotificationDetails('prayer_channel', 'Prayer Notifications',
-            importance: Importance.max, priority: Priority.high, playSound: true, icon: '@mipmap/ic_launcher'),
+            importance: Importance.max, priority: Priority.high, playSound: true, icon: '@mipmap/ic_launcher',
+            styleInformation: BigTextStyleInformation(body)),
         iOS: DarwinNotificationDetails(),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -57,12 +58,13 @@ class NotificationService {
     }
     await _notifications.zonedSchedule(
       id,
+      'athkari',
       title,
-      body,
       tz.TZDateTime.from(scheduledTime, tz.local),
-      const NotificationDetails(
+      NotificationDetails(
         android: AndroidNotificationDetails('athkar_channel', 'Athkar Notifications',
-            importance: Importance.max, priority: Priority.high, playSound: true, icon: '@mipmap/ic_launcher'),
+            importance: Importance.max, priority: Priority.high, playSound: true, icon: '@mipmap/ic_launcher',
+            styleInformation: BigTextStyleInformation(body)),
         iOS: DarwinNotificationDetails(),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
