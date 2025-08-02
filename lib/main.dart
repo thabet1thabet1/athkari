@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'core/theme.dart';
 import 'ui/screens/athkar_screen.dart';
 import 'ui/screens/quran_screen.dart';
 import 'ui/screens/prayers_screen.dart';
-import 'ui/screens/welcome_screen.dart';
+import 'ui/screens/welcome_screen_fixed.dart';
 import 'ui/widgets/location_permission_dialog.dart';
 import 'dart:ui';
 import 'package:just_audio/just_audio.dart';
@@ -14,6 +15,7 @@ import 'core/quran_download_service.dart';
 import 'core/notification_service.dart';
 import 'core/prayer_times_service.dart';
 import 'data/verses.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 
 Future<void> rescheduleAllPrayerNotifications() async {
@@ -93,22 +95,26 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => BottomNavProvider(),
-      child: Builder(
-        builder: (context) {
+      child: ScreenUtilInit(
+        designSize: const Size(375, 812),
+        minTextAdapt: true,
+        splitScreenMode: true,
+        builder: (context, child) {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
             title: 'Athkar App',
             theme: AppTheme.lightTheme,
-            home: const SplashScreen(),
-            builder: (context, child) {
+            home: child,
+            builder: (context, materialAppChild) {
               // Force textScaleFactor to 1.0 everywhere
               return MediaQuery(
                 data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
-                child: child!,
+                child: materialAppChild!,
               );
             },
           );
         },
+        child: const SplashScreen(),
       ),
     );
   }
@@ -130,8 +136,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
     _fadeAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
@@ -249,6 +256,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   void dispose() {
+    // Restore the default status bar style
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
     _animationController.dispose();
     super.dispose();
   }

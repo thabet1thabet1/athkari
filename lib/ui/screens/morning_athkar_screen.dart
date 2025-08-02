@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme.dart';
 import '../../core/constants.dart';
@@ -69,17 +70,17 @@ class _MorningAthkarScreenState extends State<MorningAthkarScreen> {
           title: Text(
             'Well done! 🎉',
             style: GoogleFonts.poppins(
-              fontSize: 20,
+              fontSize: 20.sp,
               fontWeight: FontWeight.w600,
               color: Colors.black87,
             ),
           ),
           content: Padding(
-            padding: const EdgeInsets.only(top: 8.0),
+            padding: EdgeInsets.only(top: 8.0.h),
             child: Text(
               'You have completed the Morning Athkar',
               style: GoogleFonts.poppins(
-                fontSize: 16,
+                fontSize: 16.sp,
                 color: Colors.black54,
                 height: 1.4,
               ),
@@ -124,69 +125,60 @@ class _MorningAthkarScreenState extends State<MorningAthkarScreen> {
         Scaffold(
           backgroundColor: Colors.transparent,
           appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.forestGreen),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
             title: Text(
               'Morning Athkar',
               style: GoogleFonts.poppins(
-                fontSize: 22,
+                fontSize: 22.sp,
                 fontWeight: FontWeight.bold,
                 color: AppColors.forestGreen,
               ),
             ),
-            backgroundColor: Colors.transparent,
-            elevation: 0,
             centerTitle: true,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back_ios, color: AppColors.forestGreen),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
           ),
           body: Padding(
-            padding: const EdgeInsets.all(AppConstants.spacing16),
+            padding: EdgeInsets.all(AppConstants.spacing24),
             child: Column(
               children: [
-                // Progress indicator
-                LinearProgressIndicator(
-                  value: (currentAthkarIndex + 1) / morningAthkar.length,
-                  backgroundColor: Colors.grey[300],
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.forestGreen),
-                ),
-                SizedBox(height: AppConstants.spacing24 + 12), // More space above card
-                // Main Athkar Card
-                SizedBox(
-                  height: 500,
+                // Athkar Card
+                Expanded(
                   child: GestureDetector(
-                    onTap: null, // No tap
-                    child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(AppConstants.cardRadius),
-                        border: Border.all(
-                          color: AppColors.forestGreen,
-                          width: 3.0,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 10,
-                            offset: Offset(0, 4),
+                    onTap: incrementCount,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.white.withOpacity(0.85),
+                          borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+                          border: Border.all(
+                            color: AppColors.forestGreen.withOpacity(0.3),
+                            width: 2.0.w,
                           ),
-                        ],
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(AppConstants.spacing24),
-                        child: IntrinsicHeight(
-                          child: Center(
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.forestGreen.withOpacity(0.1),
+                              blurRadius: 16.r,
+                              offset: Offset(0, 8.h),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(AppConstants.spacing16),
                             child: SingleChildScrollView(
                               child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   // Arabic Text
                                   Text(
                                     currentAthkar['arabic'],
                                     style: GoogleFonts.amiri(
-                                      fontSize: 28,
+                                      fontSize: 28.sp,
                                       fontWeight: FontWeight.bold,
                                       color: AppColors.forestGreen,
                                       height: 1.8,
@@ -199,7 +191,7 @@ class _MorningAthkarScreenState extends State<MorningAthkarScreen> {
                                   Text(
                                     currentAthkar['translation'],
                                     style: GoogleFonts.poppins(
-                                      fontSize: 16,
+                                      fontSize: 16.sp,
                                       color: Colors.grey[600],
                                       height: 1.5,
                                     ),
@@ -221,20 +213,20 @@ class _MorningAthkarScreenState extends State<MorningAthkarScreen> {
                     // Counter Display
                     Expanded(
                       child: Container(
-                        height: 56,
+                        height: 56.h,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: AppColors.white,
                           borderRadius: BorderRadius.circular(AppConstants.cardRadius),
                           border: Border.all(
                             color: AppColors.forestGreen,
-                            width: 2.0,
+                            width: 2.0.w,
                           ),
                         ),
                         child: Text(
                           '${currentAthkar['count']} times',
                           style: GoogleFonts.poppins(
-                            fontSize: 18,
+                            fontSize: 18.sp,
                             fontWeight: FontWeight.bold,
                             color: AppColors.forestGreen,
                           ),
@@ -245,7 +237,7 @@ class _MorningAthkarScreenState extends State<MorningAthkarScreen> {
                     // Next Button
                     Expanded(
                       child: SizedBox(
-                        height: 56,
+                        height: 56.h,
                         child: ElevatedButton(
                           onPressed: nextAthkar,
                           style: ElevatedButton.styleFrom(
@@ -259,7 +251,7 @@ class _MorningAthkarScreenState extends State<MorningAthkarScreen> {
                           child: Text(
                             'Next',
                             style: GoogleFonts.poppins(
-                              fontSize: 18,
+                              fontSize: 18.sp,
                               fontWeight: FontWeight.bold,
                             ),
                           ),

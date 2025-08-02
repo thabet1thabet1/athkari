@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants.dart';
 
@@ -11,7 +12,7 @@ class SwipableCard extends StatelessWidget {
   final Color borderColor;
   final Color textColor;
   final String fontFamily;
-  const SwipableCard({
+  SwipableCard({
     super.key,
     required this.label,
     required this.content,
@@ -25,7 +26,7 @@ class SwipableCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4, right: 24),
+      padding: EdgeInsets.only(left: 4.w, right: 24.w),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppConstants.cardRadius),
         child: Stack(
@@ -37,12 +38,12 @@ class SwipableCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.55),
                   borderRadius: BorderRadius.circular(AppConstants.cardRadius),
-                  border: Border.all(color: borderColor, width: 3),
+                  border: Border.all(color: borderColor, width: 3.w),
                   boxShadow: [
                     BoxShadow(
                       color: borderColor.withValues(alpha: 0.10),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
+                      blurRadius: 16.r,
+                      offset: Offset(0, 8.h),
                     ),
                   ],
                 ),
@@ -51,7 +52,7 @@ class SwipableCard extends StatelessWidget {
             ),
             Container(
               height: AppConstants.verseCardHeight,
-              padding: const EdgeInsets.all(AppConstants.spacing16),
+              padding: EdgeInsets.all(AppConstants.spacing16),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(AppConstants.cardRadius),
                 border: Border.all(color: Colors.transparent),
@@ -65,29 +66,29 @@ class SwipableCard extends StatelessWidget {
                         label,
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                          fontSize: 14.sp,
                           color: textColor,
                         ),
                       ),
                       const Spacer(),
-                      Icon(icon, color: textColor.withValues(alpha: 0.7), size: 20),
+                      Icon(icon, color: textColor.withValues(alpha: 0.7), size: 20.sp),
                     ],
                   ),
-                  const SizedBox(height: 18),
+                  SizedBox(height: 18.h),
                   Expanded(
                     child: Center(
                       child: Text(
                         label.contains('Verse') ? '﴿ ' + content + ' ﴾' : content,
                         style: GoogleFonts.amiri(
-                          fontSize: 25,
+                          fontSize: 25.sp,
                           color: textColor,
                           fontWeight: FontWeight.bold,
                           height: 1.5,
-                          shadows: const [
+                          shadows: [
                             Shadow(
                               color: Colors.black12,
-                              blurRadius: 2,
-                              offset: Offset(0, 1),
+                              blurRadius: 2.r,
+                              offset: Offset(0, 1.h),
                             ),
                           ],
                         ),
@@ -98,13 +99,13 @@ class SwipableCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8.h),
                   Align(
                     alignment: Alignment.bottomRight,
                     child: Text(
                       source,
                       style: GoogleFonts.poppins(
-                        fontSize: 12,
+                        fontSize: 12.sp,
                         color: textColor.withValues(alpha: 0.7),
                         fontWeight: FontWeight.w500,
                       ),

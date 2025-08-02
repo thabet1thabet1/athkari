@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme.dart';
 import '../../core/constants.dart';
 import '../../data/verses.dart';
 import '../widgets/category_button.dart';
-import 'package:islamicapp/ui/widgets/swipable_card.dart';
+import '../widgets/swipable_card.dart';
 import '../widgets/tasbeeh_counter_page.dart';
 import 'morning_athkar_screen.dart';
 import 'sleep_athkar_screen.dart';
@@ -30,7 +31,7 @@ class AthkarScreen extends StatelessWidget {
     return Column(
       children: [
         AppBar(
-          title: Text('Athkar', style: GoogleFonts.poppins(color: AppColors.forestGreen, fontWeight: FontWeight.bold, fontSize: 24)),
+          title: Text('Athkar', style: GoogleFonts.poppins(color: AppColors.forestGreen, fontWeight: FontWeight.bold, fontSize: 24.sp)),
           automaticallyImplyLeading: false,
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -41,10 +42,10 @@ class AthkarScreen extends StatelessWidget {
             controller: scrollController,
             padding: EdgeInsets.zero,
             children: [
-              const SizedBox(height: AppConstants.spacing16),
+              SizedBox(height: AppConstants.spacing16),
               // Swipable Verse/Dua Card
               SizedBox(
-                height: AppConstants.verseCardHeight + 8,
+                height: AppConstants.verseCardHeight + 8.h,
                 child: PageView(
                   controller: PageController(viewportFraction: 0.93),
                   children: [
@@ -69,30 +70,30 @@ class AthkarScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: AppConstants.spacing16),
+              SizedBox(height: AppConstants.spacing16),
               // Hijri Date Row with separators
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                padding: EdgeInsets.symmetric(vertical: 8.0.h),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Divider(
-                        thickness: 1.2,
-                        endIndent: 12,
+                        thickness: 1.2.h,
+                        endIndent: 12.w,
                         color: Color(0xFFB2C2B9),
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 2.h),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(16.r),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.03),
-                            blurRadius: 4,
-                            offset: Offset(0, 2),
+                            blurRadius: 4.r,
+                            offset: Offset(0, 2.h),
                           ),
                         ],
                       ),
@@ -101,62 +102,62 @@ class AthkarScreen extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           color: AppColors.forestGreen,
                           fontWeight: FontWeight.bold,
-                          fontSize: 18,
+                          fontSize: 18.sp,
                         ),
                       ),
                     ),
-                    const Expanded(
+                    Expanded(
                       child: Divider(
-                        thickness: 1.2,
-                        indent: 12,
+                        thickness: 1.2.h,
+                        indent: 12.w,
                         color: Color(0xFFB2C2B9),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: AppConstants.spacing16),
+              SizedBox(height: AppConstants.spacing16),
               // Category List
               CategoryButton(
                 icon: Icons.wb_sunny_outlined,
                 title: 'Morning Athkar',
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const MorningAthkarScreen()),
+                    MaterialPageRoute(builder: (context) => MorningAthkarScreen()),
                   );
                 },
               ),
-              SizedBox(height: 8),
+              SizedBox(height: 8.h),
               CategoryButton(
                 icon: Icons.bed_outlined,
                 title: 'Sleep Athkar',
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const SleepAthkarScreen()),
+                    MaterialPageRoute(builder: (context) => SleepAthkarScreen()),
                   );
                 },
               ),
-              SizedBox(height: 8),
+              SizedBox(height: 8.h),
               CategoryButton(
                 icon: Icons.wb_twilight,
                 title: 'Waking Up Athkar',
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const WakingUpAthkarScreen()),
+                    MaterialPageRoute(builder: (context) => WakingUpAthkarScreen()),
                   );
                 },
               ),
-              SizedBox(height: 8),
+              SizedBox(height: 8.h),
               CategoryButton(
                 icon: Icons.self_improvement,
                 title: 'Duas After Prayer',
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const AfterPrayerDuasScreen()),
+                    MaterialPageRoute(builder: (context) => AfterPrayerDuasScreen()),
                   );
                 },
               ),
-              SizedBox(height: 8),
+              SizedBox(height: 8.h),
               CategoryButton(
                 icon: Icons.exposure,
                 title: 'Tasbeeh Counter',
@@ -166,17 +167,17 @@ class AthkarScreen extends StatelessWidget {
                   );
                 },
               ),
-              SizedBox(height: 8),
+              SizedBox(height: 8.h),
               CategoryButton(
                 icon: Icons.nights_stay_outlined,
                 title: 'Evening Athkar',
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const EveningAthkarScreen()),
+                    MaterialPageRoute(builder: (context) => EveningAthkarScreen()),
                   );
                 },
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32.h),
             ],
           ),
         ),

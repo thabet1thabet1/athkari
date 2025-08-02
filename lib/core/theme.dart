@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
@@ -27,6 +28,9 @@ class AppTheme {
             fontSize: 22,
           ),
           iconTheme: IconThemeData(color: AppColors.forestGreen),
+          systemOverlayStyle: SystemUiOverlayStyle.dark.copyWith(
+            statusBarColor: Colors.transparent,
+          ),
         ),
         textTheme: TextTheme(
           bodyLarge: GoogleFonts.poppins(
