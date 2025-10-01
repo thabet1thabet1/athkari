@@ -5,7 +5,6 @@
 ---
 
 ## 🔗 Links
-- **GitHub Repository:** [https://github.com/thabet1thabet1/athkari](https://github.com/thabet1thabet1/athkari)
 - **LinkedIn:** [Thabet Charef Khodja](https://www.linkedin.com/in/thabet-charef-khodja-97ab03347/)
 
 ---
@@ -112,6 +111,6 @@ This project is for educational and personal use. Please respect the rights of Q
 
 ## 📧 Contact
 
-For any questions, suggestions, or professional inquiries, feel free to reach out via [LinkedIn](https://www.linkedin.com/in/thabet-charef-khodja-97ab03347/) or through the [GitHub repository](https://github.com/thabet1thabet1/athkari).
+For any questions, suggestions, or professional inquiries, feel free to reach out via [LinkedIn](https://www.linkedin.com/in/thabet-charef-khodja-97ab03347/)
 
 ---
