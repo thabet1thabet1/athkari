@@ -50,30 +50,50 @@ Future<void> rescheduleAllPrayerNotifications() async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await NotificationService.init();
-  // Schedule daily athkar notifications
-  await NotificationService.scheduleAthkarNotification(
-    id: 100,
-    title: 'Time for Morning Athkar',
-    body: 'Start your day with the remembrance of Allah. Recite your morning athkar.',
-    hour: 5,
-    minute: 50,
-  );
-  await NotificationService.scheduleAthkarNotification(
-    id: 101,
-    title: 'Time for Evening Athkar',
-    body: 'End your day with the remembrance of Allah. Recite your evening athkar.',
-    hour: 17,
-    minute: 30,
-  );
-  await NotificationService.scheduleAthkarNotification(
-    id: 102,
-    title: 'Time for Sleep Athkar',
-    body: 'Before you sleep, remember Allah. Recite your sleep athkar for a peaceful night.',
-    hour: 22,
-    minute: 0,
-  );
+  
+  // Schedule daily athkar notifications with error handling
+  try {
+    await NotificationService.scheduleAthkarNotification(
+      id: 100,
+      title: 'Time for Morning Athkar',
+      body: 'Start your day with the remembrance of Allah. Recite your morning athkar.',
+      hour: 5,
+      minute: 50,
+    );
+  } catch (e) {
+    print('Failed to schedule notification: $e');
+    // Continue app initialization even if notifications fail
+  }
+  try {
+    await NotificationService.scheduleAthkarNotification(
+      id: 101,
+      title: 'Time for Evening Athkar',
+      body: 'End your day with the remembrance of Allah. Recite your evening athkar.',
+      hour: 17,
+      minute: 30,
+    );
+  } catch (e) {
+    print('Failed to schedule evening notification: $e');
+  }
+  
+  try {
+    await NotificationService.scheduleAthkarNotification(
+      id: 102,
+      title: 'Time for Sleep Athkar',
+      body: 'Before you sleep, remember Allah. Recite your sleep athkar for a peaceful night.',
+      hour: 22,
+      minute: 0,
+    );
+  } catch (e) {
+    print('Failed to schedule sleep notification: $e');
+  }
+  
   // Reschedule prayer notifications on app start
-  await rescheduleAllPrayerNotifications();
+  try {
+    await rescheduleAllPrayerNotifications();
+  } catch (e) {
+    print('Failed to reschedule prayer notifications: $e');
+  }
   runApp(const MyApp());
 }
 
@@ -558,19 +578,37 @@ class GlassNavBar extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(32),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24), // Increased blur for more liquid glass effect
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           height: 64,
           decoration: BoxDecoration(
-            color: Colors.grey.withAlpha(46),
+            // Enhanced liquid glass effect with gradient
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withOpacity(0.25),
+                Colors.white.withOpacity(0.15),
+              ],
+            ),
             borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: const Color.fromARGB(255, 225, 223, 223), width: 1.5), // gray border
+            border: Border.all(
+              color: Colors.white.withOpacity(0.3), // Subtle white border for glass edge
+              width: 1.5,
+            ),
             boxShadow: [
+              // Soft shadow for depth
               BoxShadow(
-                color: const Color(0xFFB6EFC6).withOpacity(0.25), // green shadow
-                blurRadius: 18,
-                offset: const Offset(0, 6),
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+              // Green glow shadow
+              BoxShadow(
+                color: const Color(0xFFB6EFC6).withOpacity(0.3),
+                blurRadius: 24,
+                offset: const Offset(0, 4),
               ),
             ],
           ),

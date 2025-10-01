@@ -18,24 +18,116 @@ import '../../core/notification_service.dart';
 import 'qibla_screen.dart';
 
 // Top-level function for calculation method selection
+// Comprehensive mapping of countries to their official calculation methods
 int getCalculationMethodForCountry(String? country) {
   if (country == null) return 3; // Default to MWL
   final c = country.toLowerCase();
-  if (c.contains('saudi')) return 4; // Umm Al-Qura
+  
+  // GULF COUNTRIES - Umm Al-Qura (Method 4)
+  if (c.contains('saudi') || c.contains('arabia')) return 4;
   if (c.contains('qatar')) return 4;
   if (c.contains('kuwait')) return 4;
-  if (c.contains('uae')) return 4;
+  if (c.contains('uae') || c.contains('emirates')) return 4;
   if (c.contains('oman')) return 4;
   if (c.contains('bahrain')) return 4;
-  if (c.contains('turkey')) return 13; // Diyanet
+  if (c.contains('yemen')) return 4;
+  
+  // TURKEY - Diyanet (Method 13)
+  if (c.contains('turkey') || c.contains('türkiye')) return 13;
+  
+  // SOUTHEAST ASIA - Various methods
   if (c.contains('singapore')) return 15; // MUIS
+  if (c.contains('malaysia')) return 8; // JAKIM
+  if (c.contains('brunei')) return 8; // JAKIM
+  if (c.contains('indonesia')) return 11; // Kemenag
+  if (c.contains('thailand')) return 3; // MWL
+  if (c.contains('philippines')) return 3; // MWL
+  
+  // SOUTH ASIA - Karachi method (Method 7)
+  if (c.contains('pakistan')) return 7;
+  if (c.contains('bangladesh')) return 7;
+  if (c.contains('india')) return 7;
+  if (c.contains('afghanistan')) return 7;
+  if (c.contains('sri lanka')) return 3; // MWL
+  if (c.contains('nepal')) return 7;
+  if (c.contains('maldives')) return 3; // MWL
+  
+  // MIDDLE EAST - Various methods
+  if (c.contains('egypt')) return 5; // Egyptian General Authority
+  if (c.contains('jordan')) return 3; // MWL
+  if (c.contains('palestine')) return 5; // Egyptian method
+  if (c.contains('lebanon')) return 3; // MWL
+  if (c.contains('syria')) return 3; // MWL
+  if (c.contains('iraq')) return 3; // MWL
+  if (c.contains('iran')) return 99; // Tehran (Jafari)
+  
+  // NORTH AFRICA - Muslim World League (Method 3)
+  if (c.contains('algeria')) return 3;
+  if (c.contains('morocco')) return 3;
+  if (c.contains('tunisia')) return 3;
+  if (c.contains('libya')) return 3;
+  if (c.contains('mauritania')) return 3;
+  if (c.contains('sudan')) return 3;
+  
+  // SUB-SAHARAN AFRICA - MWL (Method 3)
+  if (c.contains('nigeria')) return 3;
+  if (c.contains('senegal')) return 3;
+  if (c.contains('mali')) return 3;
+  if (c.contains('somalia')) return 3;
+  if (c.contains('kenya')) return 3;
+  if (c.contains('tanzania')) return 3;
+  if (c.contains('ethiopia')) return 3;
+  if (c.contains('south africa')) return 3;
+  
+  // EUROPE - Various methods
   if (c.contains('france')) return 12; // UOIF
-  if (c.contains('north america') || c.contains('united states') || c.contains('canada')) return 2; // ISNA
-  if (c.contains('egypt')) return 5; // Egypt
-  if (c.contains('pakistan')) return 7; // Karachi
-  if (c.contains('russia')) return 14; // Russia
-  if (c.contains('algeria') || c.contains('morocco') || c.contains('tunisia')) return 3; // MWL
-  return 3; // Default to MWL
+  if (c.contains('united kingdom') || c.contains('britain') || c.contains('england') || c.contains('scotland') || c.contains('wales')) return 3; // MWL
+  if (c.contains('germany')) return 3; // MWL
+  if (c.contains('netherlands')) return 3; // MWL
+  if (c.contains('belgium')) return 3; // MWL
+  if (c.contains('spain')) return 3; // MWL
+  if (c.contains('italy')) return 3; // MWL
+  if (c.contains('sweden')) return 3; // MWL
+  if (c.contains('norway')) return 3; // MWL
+  if (c.contains('denmark')) return 3; // MWL
+  if (c.contains('austria')) return 3; // MWL
+  if (c.contains('switzerland')) return 3; // MWL
+  if (c.contains('bosnia')) return 3; // MWL
+  if (c.contains('albania')) return 3; // MWL
+  if (c.contains('kosovo')) return 3; // MWL
+  
+  // RUSSIA & CENTRAL ASIA
+  if (c.contains('russia')) return 14; // Russian method
+  if (c.contains('kazakhstan')) return 14;
+  if (c.contains('uzbekistan')) return 14;
+  if (c.contains('turkmenistan')) return 14;
+  if (c.contains('kyrgyzstan')) return 14;
+  if (c.contains('tajikistan')) return 14;
+  if (c.contains('azerbaijan')) return 14;
+  
+  // NORTH AMERICA - ISNA (Method 2)
+  if (c.contains('united states') || c.contains('usa') || c.contains('america')) return 2;
+  if (c.contains('canada')) return 2;
+  if (c.contains('mexico')) return 2;
+  
+  // SOUTH AMERICA - ISNA (Method 2)
+  if (c.contains('brazil')) return 2;
+  if (c.contains('argentina')) return 2;
+  if (c.contains('chile')) return 2;
+  if (c.contains('colombia')) return 2;
+  if (c.contains('venezuela')) return 2;
+  
+  // OCEANIA - MWL (Method 3)
+  if (c.contains('australia')) return 3;
+  if (c.contains('new zealand')) return 3;
+  
+  // EAST ASIA - MWL (Method 3)
+  if (c.contains('china')) return 3;
+  if (c.contains('japan')) return 3;
+  if (c.contains('korea')) return 3;
+  
+  // Default to Muslim World League for any unspecified country
+  return 3; // MWL - Most widely accepted method globally
 }
 
 class PrayerTime {
@@ -91,6 +183,12 @@ class _PrayersScreenState extends State<PrayersScreen> {
   Duration _timeLeft = Duration.zero;
   // Timer
   late final Ticker _ticker;
+  // Notification states for Qiyam and Midnight
+  bool qiyamNotif = false;
+  bool midnightNotif = false;
+  // Calculated times for Qiyam and Midnight
+  DateTime? _calculatedMidnight;
+  DateTime? _calculatedQiyam;
   // Add a mapping from prayer name to image asset
   final Map<String, String> _prayerImages = {
     'Fajr': 'lib/images/500640FA-FF23-4FBE-B72F-43E8DD396CBD.JPEG',
@@ -103,6 +201,7 @@ class _PrayersScreenState extends State<PrayersScreen> {
   @override
   void initState() {
     super.initState();
+    _loadNotificationStates();
     _initLocationAndPrayerTimes();
     _ticker = Ticker(_updateCountdown, mountedCheck: () => mounted)..start();
   }
@@ -111,6 +210,202 @@ class _PrayersScreenState extends State<PrayersScreen> {
   void dispose() {
     _ticker.dispose();
     super.dispose();
+  }
+
+  // Load notification states from SharedPreferences
+  void _loadNotificationStates() {
+    SharedPreferences.getInstance().then((prefs) {
+      if (mounted) {
+        setState(() {
+          qiyamNotif = prefs.getBool('qiyam_notification') ?? false;
+          midnightNotif = prefs.getBool('midnight_notification') ?? false;
+        });
+      }
+    });
+  }
+
+  // Load prayer notification states from SharedPreferences
+  Future<void> _loadPrayerNotificationStates() async {
+    final prefs = await SharedPreferences.getInstance();
+    for (int i = 0; i < _prayerTimes.length; i++) {
+      final key = 'prayer_notification_${_prayerTimes[i].name.toLowerCase()}';
+      _prayerTimes[i].notificationEnabled = prefs.getBool(key) ?? false;
+    }
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  // Save notification state to SharedPreferences
+  Future<void> _saveNotificationState(String key, bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(key, value);
+  }
+
+  // Calculate Islamic Midnight and Qiyam times
+  void _calculateNightTimes() {
+    if (_prayerTimes.isEmpty) return;
+    
+    // Find Maghrib and Fajr times
+    DateTime? maghribTime;
+    DateTime? fajrTime;
+    
+    for (var prayer in _prayerTimes) {
+      if (prayer.name == 'Maghrib') maghribTime = prayer.time;
+      if (prayer.name == 'Fajr') fajrTime = prayer.time;
+    }
+    
+    if (maghribTime == null || fajrTime == null) return;
+    
+    // Fajr is next day, so add 24 hours if it appears before Maghrib
+    if (fajrTime.isBefore(maghribTime)) {
+      fajrTime = fajrTime.add(const Duration(days: 1));
+    }
+    
+    // Islamic Midnight = Halfway between Maghrib and Fajr
+    final nightDuration = fajrTime.difference(maghribTime);
+    _calculatedMidnight = maghribTime.add(Duration(milliseconds: (nightDuration.inMilliseconds / 2).round()));
+    
+    // Last Third of Night (Best time for Qiyam) = Maghrib + (2/3 of night duration)
+    _calculatedQiyam = maghribTime.add(Duration(milliseconds: ((nightDuration.inMilliseconds * 2) / 3).round()));
+    
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  // Toggle Qiyam notification
+  void _toggleQiyamNotif() async {
+    setState(() {
+      qiyamNotif = !qiyamNotif;
+    });
+    await _saveNotificationState('qiyam_notification', qiyamNotif);
+    
+    if (qiyamNotif) {
+      // Use calculated Qiyam time (last third of night)
+      if (_calculatedQiyam == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Unable to calculate Qiyam time. Please wait for prayer times to load.'),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: Colors.red.withOpacity(0.85),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+        return;
+      }
+      
+      var scheduledTime = _calculatedQiyam!;
+      final now = DateTime.now();
+      if (scheduledTime.isBefore(now)) {
+        scheduledTime = scheduledTime.add(const Duration(days: 1));
+      }
+      
+      await NotificationService.schedulePrayerNotification(
+        id: 100, // Unique ID for Qiyam
+        title: "It's time for Qiyam (Last Third of Night)",
+        body: 'The best time for night prayer has arrived.',
+        scheduledTime: scheduledTime,
+      );
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Qiyam notification enabled'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.black.withOpacity(0.85),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } else {
+      await NotificationService.cancelNotification(100);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Qiyam notification disabled'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.black.withOpacity(0.85),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  // Toggle Midnight notification
+  void _toggleMidnightNotif() async {
+    setState(() {
+      midnightNotif = !midnightNotif;
+    });
+    await _saveNotificationState('midnight_notification', midnightNotif);
+    
+    if (midnightNotif) {
+      // Use calculated Islamic Midnight (halfway between Maghrib and Fajr)
+      if (_calculatedMidnight == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Unable to calculate Midnight time. Please wait for prayer times to load.'),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: Colors.red.withOpacity(0.85),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+        return;
+      }
+      
+      var scheduledTime = _calculatedMidnight!;
+      final now = DateTime.now();
+      if (scheduledTime.isBefore(now)) {
+        scheduledTime = scheduledTime.add(const Duration(days: 1));
+      }
+      
+      await NotificationService.schedulePrayerNotification(
+        id: 101, // Unique ID for Midnight
+        title: "It's time for Islamic Midnight",
+        body: 'Halfway through the night - a blessed time for prayer.',
+        scheduledTime: scheduledTime,
+      );
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Midnight notification enabled'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.black.withOpacity(0.85),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } else {
+      await NotificationService.cancelNotification(101);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Midnight notification disabled'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.black.withOpacity(0.85),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   void _initLocationAndPrayerTimes() async {
@@ -179,10 +474,14 @@ class _PrayersScreenState extends State<PrayersScreen> {
           setState(() {
             _city = city;
             _prayerTimes = apiPrayerTimes;
-            _loadManualOffsets();
             _updateNextPrayer();
           });
         }
+        _loadManualOffsets();
+        // Calculate night times (Midnight and Qiyam)
+        _calculateNightTimes();
+        // Load notification states after prayer times are set
+        await _loadPrayerNotificationStates();
         return;
       }
     } catch (e) {
@@ -202,13 +501,21 @@ class _PrayersScreenState extends State<PrayersScreen> {
   Future<List<PrayerTime>?> _fetchPrayerTimesFromAPI(double lat, double lng, [String? country]) async {
     try {
       final date = DateTime.now();
-      final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
       final method = getCalculationMethodForCountry(country);
-      final url = 'http://api.aladhan.com/v1/timings/$dateStr?latitude=$lat&longitude=$lng&method=$method';
+      
+      // Use calendar endpoint with DD-MM-YYYY format and timezone auto-detection for most accurate results
+      final dateStr = '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}';
+      final url = 'https://api.aladhan.com/v1/timings/$dateStr?latitude=$lat&longitude=$lng&method=$method';
+      
+      print('Fetching prayer times for $country from: $url');
       final response = await http.get(Uri.parse(url));
+      
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final timings = data['data']['timings'];
+        final meta = data['data']['meta'];
+        print('API Response - Location: ${meta['timezone']}, Method: ${meta['method']['name']}');
+        print('Prayer times: Fajr=${timings['Fajr']}, Dhuhr=${timings['Dhuhr']}, Asr=${timings['Asr']}, Maghrib=${timings['Maghrib']}, Isha=${timings['Isha']}');
         return [
           if (timings['Fajr'] != null)
             PrayerTime(
@@ -328,6 +635,11 @@ class _PrayersScreenState extends State<PrayersScreen> {
       });
       final pt = _prayerTimes[idx];
       final id = idx + 1; // Unique ID per prayer
+      
+      // Save notification state to SharedPreferences
+      final key = 'prayer_notification_${pt.name.toLowerCase()}';
+      await _saveNotificationState(key, pt.notificationEnabled);
+      
       if (pt.notificationEnabled) {
         await NotificationService.schedulePrayerNotification(
           id: id,
@@ -577,7 +889,14 @@ class _PrayersScreenState extends State<PrayersScreen> {
         return StatefulBuilder(
           builder: (context, setStateDialog) {
             // Persist state within the dialog
-            return _QiyamMidnightDialogContent();
+            return _QiyamMidnightDialogContent(
+              calculatedQiyam: _calculatedQiyam,
+              calculatedMidnight: _calculatedMidnight,
+              onQiyamToggle: _toggleQiyamNotif,
+              onMidnightToggle: _toggleMidnightNotif,
+              qiyamEnabled: qiyamNotif,
+              midnightEnabled: midnightNotif,
+            );
           },
         );
       },
@@ -1097,115 +1416,29 @@ class _QiyamMidnightCard extends StatelessWidget {
   }
 }
 
-class _QiyamMidnightDialogContent extends StatefulWidget {
-  @override
-  State<_QiyamMidnightDialogContent> createState() => _QiyamMidnightDialogContentState();
-}
+class _QiyamMidnightDialogContent extends StatelessWidget {
+  final DateTime? calculatedQiyam;
+  final DateTime? calculatedMidnight;
+  final VoidCallback onQiyamToggle;
+  final VoidCallback onMidnightToggle;
+  final bool qiyamEnabled;
+  final bool midnightEnabled;
 
-class _QiyamMidnightDialogContentState extends State<_QiyamMidnightDialogContent> {
-  bool qiyamNotif = false;
-  bool midnightNotif = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadPrefs();
-  }
-
-  Future<void> _loadPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      qiyamNotif = prefs.getBool('qiyam_notif') ?? false;
-      midnightNotif = prefs.getBool('midnight_notif') ?? false;
-    });
-  }
-
-  Future<void> _toggleQiyamNotif() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      qiyamNotif = !qiyamNotif;
-    });
-    await prefs.setBool('qiyam_notif', qiyamNotif);
-    if (qiyamNotif) {
-      await NotificationService.schedulePrayerNotification(
-        id: 200,
-        title: "It's time for Qiyam",
-        body: 'Time for Qiyam prayer.',
-        scheduledTime: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, 1, 9),
-      );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Qiyam notification enabled'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.black.withOpacity(0.85),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    } else {
-      await NotificationService.cancelNotification(200);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Qiyam notification disabled'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.black.withOpacity(0.85),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _toggleMidnightNotif() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      midnightNotif = !midnightNotif;
-    });
-    await prefs.setBool('midnight_notif', midnightNotif);
-    if (midnightNotif) {
-      await NotificationService.schedulePrayerNotification(
-        id: 201,
-        title: "It's time for Midnight",
-        body: 'Time for Midnight prayer.',
-        scheduledTime: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, 23, 52),
-      );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Midnight notification enabled'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.black.withOpacity(0.85),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    } else {
-      await NotificationService.cancelNotification(201);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Midnight notification disabled'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.black.withOpacity(0.85),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    }
-  }
+  const _QiyamMidnightDialogContent({
+    required this.calculatedQiyam,
+    required this.calculatedMidnight,
+    required this.onQiyamToggle,
+    required this.onMidnightToggle,
+    required this.qiyamEnabled,
+    required this.midnightEnabled,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final timeFormat = DateFormat('h:mm a');
+    final qiyamTimeStr = calculatedQiyam != null ? timeFormat.format(calculatedQiyam!) : '--:--';
+    final midnightTimeStr = calculatedMidnight != null ? timeFormat.format(calculatedMidnight!) : '--:--';
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
       backgroundColor: const Color(0xFFF8FAF8), // Soft background
@@ -1227,9 +1460,9 @@ class _QiyamMidnightDialogContentState extends State<_QiyamMidnightDialogContent
             _QiyamMidnightCard(
               label: 'Qiyam',
               icon: Icons.nightlight_round,
-              time: '1:09',
-              notificationEnabled: qiyamNotif,
-              onBellTap: _toggleQiyamNotif,
+              time: qiyamTimeStr,
+              notificationEnabled: qiyamEnabled,
+              onBellTap: onQiyamToggle,
             ),
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 8.0),
@@ -1238,9 +1471,9 @@ class _QiyamMidnightDialogContentState extends State<_QiyamMidnightDialogContent
             _QiyamMidnightCard(
               label: 'Midnight',
               icon: Icons.nights_stay,
-              time: '11:52',
-              notificationEnabled: midnightNotif,
-              onBellTap: _toggleMidnightNotif,
+              time: midnightTimeStr,
+              notificationEnabled: midnightEnabled,
+              onBellTap: onMidnightToggle,
             ),
             const SizedBox(height: 28),
             SizedBox(
@@ -1485,42 +1718,107 @@ class _MonthlyPrayerCalendarPageState extends State<MonthlyPrayerCalendarPage> {
                                   ..hMonth = _hijriMonth
                                   ..hDay = hijriDay;
                                 final gregorianDate = hijriDayObj.hijriToGregorian(_hijriYear, _hijriMonth, hijriDay);
+                                
+                                // Check if this is today
+                                final isToday = gregorianDate.year == _now.year && 
+                                                gregorianDate.month == _now.month && 
+                                                gregorianDate.day == _now.day;
+                                
                                 return Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: forestGreen.withOpacity(0.08),
+                                      color: isToday 
+                                          ? forestGreen.withOpacity(0.18) 
+                                          : forestGreen.withOpacity(0.08),
                                       borderRadius: BorderRadius.circular(24),
+                                      border: isToday 
+                                          ? Border.all(color: forestGreen.withOpacity(0.4), width: 2)
+                                          : null,
                                     ),
-                                    child: ExpansionTile(
-                                      title: Row(
-                                        children: [
-                                          Text(
-                                            'Day $hijriDay',
-                                            style: GoogleFonts.poppins(
-                                              color: forestGreen,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 18,
-                                            ),
-                                          ),
-                                          SizedBox(width: 12),
-                                          Text(
-                                            DateFormat('EEE, d MMM').format(gregorianDate),
-                                            style: GoogleFonts.poppins(
-                                              color: Colors.black54,
-                                              fontWeight: FontWeight.w500,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                        ],
+                                    child: Theme(
+                                      data: Theme.of(context).copyWith(
+                                        dividerColor: Colors.transparent,
                                       ),
-                                      children: prayers.map((pt) {
-                                        return ListTile(
-                                          leading: Icon(pt.icon, color: forestGreen),
-                                          title: Text(pt.name, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-                                          trailing: Text(DateFormat('h:mm a').format(pt.time), style: GoogleFonts.poppins()),
-                                        );
-                                      }).toList(),
+                                      child: ExpansionTile(
+                                        tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                                        childrenPadding: const EdgeInsets.only(bottom: 12),
+                                        title: Row(
+                                          children: [
+                                            Text(
+                                              'Day $hijriDay',
+                                              style: GoogleFonts.poppins(
+                                                color: forestGreen,
+                                                fontWeight: isToday ? FontWeight.w800 : FontWeight.bold,
+                                                fontSize: 18,
+                                              ),
+                                            ),
+                                            if (isToday) ...[
+                                              const SizedBox(width: 8),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: forestGreen,
+                                                  borderRadius: BorderRadius.circular(12),
+                                                ),
+                                                child: Text(
+                                                  'Today',
+                                                  style: GoogleFonts.poppins(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 11,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                            const SizedBox(width: 12),
+                                            Text(
+                                              DateFormat('EEE, d MMM').format(gregorianDate),
+                                              style: GoogleFonts.poppins(
+                                                color: Colors.black54,
+                                                fontWeight: FontWeight.w500,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        children: prayers.map((pt) {
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withOpacity(0.6),
+                                                borderRadius: BorderRadius.circular(16),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  Icon(pt.icon, color: forestGreen, size: 24),
+                                                  const SizedBox(width: 16),
+                                                  Expanded(
+                                                    child: Text(
+                                                      pt.name,
+                                                      style: GoogleFonts.poppins(
+                                                        fontWeight: FontWeight.w600,
+                                                        fontSize: 15,
+                                                        color: Colors.black87,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    DateFormat('h:mm a').format(pt.time),
+                                                    style: GoogleFonts.poppins(
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 15,
+                                                      color: forestGreen,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        }).toList(),
+                                      ),
                                     ),
                                   ),
                                 );

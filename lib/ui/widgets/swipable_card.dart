@@ -66,29 +66,29 @@ class SwipableCard extends StatelessWidget {
                         label,
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.bold,
-                          fontSize: 14.sp,
+                          fontSize: 13.sp,
                           color: textColor,
                         ),
                       ),
                       const Spacer(),
-                      Icon(icon, color: textColor.withValues(alpha: 0.7), size: 20.sp),
+                      Icon(icon, color: textColor.withValues(alpha: 0.7), size: 19.sp),
                     ],
                   ),
-                  SizedBox(height: 18.h),
+                  SizedBox(height: 16.h),
                   Expanded(
                     child: Center(
                       child: Text(
                         label.contains('Verse') ? '﴿ ' + content + ' ﴾' : content,
                         style: GoogleFonts.amiri(
-                          fontSize: 25.sp,
+                          fontSize: 22.sp,
                           color: textColor,
                           fontWeight: FontWeight.bold,
-                          height: 1.5,
+                          height: 1.45,
                           shadows: [
                             Shadow(
                               color: Colors.black12,
-                              blurRadius: 2.r,
-                              offset: Offset(0, 1.h),
+                              blurRadius: 1.5.r,
+                              offset: Offset(0, 0.5.h),
                             ),
                           ],
                         ),
@@ -99,13 +99,13 @@ class SwipableCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  SizedBox(height: 8.h),
+                  SizedBox(height: 6.h),
                   Align(
                     alignment: Alignment.bottomRight,
                     child: Text(
                       source,
                       style: GoogleFonts.poppins(
-                        fontSize: 12.sp,
+                        fontSize: 11.sp,
                         color: textColor.withValues(alpha: 0.7),
                         fontWeight: FontWeight.w500,
                       ),

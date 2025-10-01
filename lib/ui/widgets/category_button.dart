@@ -29,7 +29,7 @@ class CategoryButton extends StatelessWidget {
           child: Row(
             children: [
               SizedBox(width: AppConstants.spacing16),
-              Icon(icon, color: AppColors.forestGreen, size: 28.sp),
+              Icon(icon, color: AppColors.forestGreen, size: 26.sp),
               SizedBox(width: AppConstants.spacing16),
               Expanded(
                 child: Text(
@@ -37,7 +37,7 @@ class CategoryButton extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Colors.black,
                         fontWeight: FontWeight.w600,
-                        fontSize: 18.sp,
+                        fontSize: 17.sp,
                       ),
                 ),
               ),

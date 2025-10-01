@@ -86,7 +86,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               'هذا التطبيق غير ربحي بالكامل، ولا يحتوي على أي إعلانات أو مصادر للربح. تم تطويره بالكامل من قِبل ثابت شارف خوجة، ونُشر من قِبل احمد السيد روشبيك كصدقة جارية نرجو أن ينفعنا الله بها في دنيانا وآخرتنا.',
                               style: GoogleFonts.cairo(
                                 fontSize: 18.sp,
-                                height: 1.7,
+                                height: 2.0,
                                 color: Colors.black87,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -101,7 +101,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               'This application is entirely non-profit, with no advertisements or sources of income. It was fully developed by Thabet Charef Khodja and published by Ahmed Elsayed Roshbaik as a form of ongoing charity (sadaqah jariyah). We pray that Allah allows it to benefit us in our dunya and akhirah.',
                               style: GoogleFonts.poppins(
                                 fontSize: 16.sp,
-                                height: 1.5,
+                                height: 1.8,
                                 color: Colors.black87,
                                 fontWeight: FontWeight.w600,
                               ),

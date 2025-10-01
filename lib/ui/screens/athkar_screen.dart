@@ -31,21 +31,22 @@ class AthkarScreen extends StatelessWidget {
     return Column(
       children: [
         AppBar(
-          title: Text('Athkar', style: GoogleFonts.poppins(color: AppColors.forestGreen, fontWeight: FontWeight.bold, fontSize: 24.sp)),
+          title: Text('Athkar', style: GoogleFonts.poppins(color: AppColors.forestGreen, fontWeight: FontWeight.bold, fontSize: 22.sp)),
           automaticallyImplyLeading: false,
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
+          toolbarHeight: 50.h,
         ),
         Expanded(
           child: ListView(
             controller: scrollController,
             padding: EdgeInsets.zero,
             children: [
-              SizedBox(height: AppConstants.spacing16),
+              SizedBox(height: AppConstants.spacing8),
               // Swipable Verse/Dua Card
               SizedBox(
-                height: AppConstants.verseCardHeight + 8.h,
+                height: AppConstants.verseCardHeight + 6.h,
                 child: PageView(
                   controller: PageController(viewportFraction: 0.93),
                   children: [
@@ -70,10 +71,10 @@ class AthkarScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              SizedBox(height: AppConstants.spacing16),
+              SizedBox(height: AppConstants.spacing8),
               // Hijri Date Row with separators
               Padding(
-                padding: EdgeInsets.symmetric(vertical: 8.0.h),
+                padding: EdgeInsets.symmetric(vertical: 6.0.h),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -85,15 +86,15 @@ class AthkarScreen extends StatelessWidget {
                       ),
                     ),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 2.h),
+                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 1.h),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(16.r),
+                        borderRadius: BorderRadius.circular(14.r),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.03),
-                            blurRadius: 4.r,
-                            offset: Offset(0, 2.h),
+                            blurRadius: 3.r,
+                            offset: Offset(0, 1.h),
                           ),
                         ],
                       ),
@@ -102,7 +103,7 @@ class AthkarScreen extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           color: AppColors.forestGreen,
                           fontWeight: FontWeight.bold,
-                          fontSize: 18.sp,
+                          fontSize: 16.sp,
                         ),
                       ),
                     ),
@@ -116,7 +117,7 @@ class AthkarScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              SizedBox(height: AppConstants.spacing16),
+              SizedBox(height: AppConstants.spacing8),
               // Category List
               CategoryButton(
                 icon: Icons.wb_sunny_outlined,
@@ -127,7 +128,7 @@ class AthkarScreen extends StatelessWidget {
                   );
                 },
               ),
-              SizedBox(height: 8.h),
+              SizedBox(height: 6.h),
               CategoryButton(
                 icon: Icons.bed_outlined,
                 title: 'Sleep Athkar',
@@ -137,7 +138,7 @@ class AthkarScreen extends StatelessWidget {
                   );
                 },
               ),
-              SizedBox(height: 8.h),
+              SizedBox(height: 6.h),
               CategoryButton(
                 icon: Icons.wb_twilight,
                 title: 'Waking Up Athkar',
@@ -147,7 +148,7 @@ class AthkarScreen extends StatelessWidget {
                   );
                 },
               ),
-              SizedBox(height: 8.h),
+              SizedBox(height: 6.h),
               CategoryButton(
                 icon: Icons.self_improvement,
                 title: 'Duas After Prayer',
@@ -157,7 +158,7 @@ class AthkarScreen extends StatelessWidget {
                   );
                 },
               ),
-              SizedBox(height: 8.h),
+              SizedBox(height: 6.h),
               CategoryButton(
                 icon: Icons.exposure,
                 title: 'Tasbeeh Counter',
@@ -167,7 +168,7 @@ class AthkarScreen extends StatelessWidget {
                   );
                 },
               ),
-              SizedBox(height: 8.h),
+              SizedBox(height: 6.h),
               CategoryButton(
                 icon: Icons.nights_stay_outlined,
                 title: 'Evening Athkar',
@@ -177,7 +178,7 @@ class AthkarScreen extends StatelessWidget {
                   );
                 },
               ),
-              SizedBox(height: 32.h),
+              SizedBox(height: 24.h),
             ],
           ),
         ),

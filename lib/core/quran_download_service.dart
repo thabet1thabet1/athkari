@@ -747,14 +747,32 @@ class QuranDownloadService {
   /// Checks and requests storage permissions
   static Future<bool> _checkPermissions() async {
     try {
-      final status = await Permission.storage.status;
-      if (status.isGranted) {
-        return true;
+      // On Android 10+ (API 29+), apps can write to their own app directory without storage permission
+      // We're using path_provider to get the app's documents directory, so no permission needed
+      if (Platform.isAndroid) {
+        // Check if we can access the app's documents directory
+        try {
+          final appDir = await getApplicationDocumentsDirectory();
+          final testFile = File('${appDir.path}/test_write.tmp');
+          await testFile.writeAsString('test');
+          await testFile.delete();
+          return true; // Can write to app directory
+        } catch (e) {
+          print('Cannot write to app directory: $e');
+          // Fallback to requesting storage permission
+          final status = await Permission.storage.status;
+          if (status.isGranted) {
+            return true;
+          }
+          final result = await Permission.storage.request();
+          return result.isGranted;
+        }
       }
       
-      final result = await Permission.storage.request();
-      return result.isGranted;
+      // For iOS, no permission needed
+      return true;
     } catch (e) {
+      print('Permission check error: $e');
       return false;
     }
   }

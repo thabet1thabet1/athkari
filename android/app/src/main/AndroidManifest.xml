@@ -4,12 +4,15 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <!-- Internet permission for Quran downloads -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Storage permissions for file downloads -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!-- Notification permissions -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     
     <application
-        android:label="islamicapp"
+        android:label="athkari"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity

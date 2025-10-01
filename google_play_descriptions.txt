@@ -1,0 +1,37 @@
+### English
+
+**Short Description:**
+Your daily companion for Athkar, Prayer Times, Qibla, and Quran.
+
+**Full Description:**
+Athkari is your comprehensive Islamic app, designed to be your daily companion on your spiritual journey. Stay connected to your faith with essential features, all in one beautiful and easy-to-use interface.
+
+**Key Features:**
+
+*   **Athkar & Duas:** A complete collection of daily Athkar, including morning, evening, after-prayer, sleep, and waking up supplications. Strengthen your remembrance of Allah throughout the day.
+*   **Prayer Times:** Get accurate prayer timings based on your location so you never miss a prayer.
+*   **Qibla Finder:** Easily find the direction of the Kaaba with our precise and reliable Qibla compass.
+*   **Holy Quran:** Carry the Holy Quran with you everywhere. Read and reflect upon the verses with a clean and accessible interface.
+*   **User-Friendly Interface:** Designed with simplicity and elegance, making it easy for users of all ages to navigate and benefit from the app.
+
+Download Athkari today and bring your faith essentials into the palm of your hand.
+
+---
+
+### Arabic
+
+**Short Description:**
+رفيقك اليومي للأذكار، مواقيت الصلاة، القبلة، والقرآن الكريم.
+
+**Full Description:**
+تطبيق أذكاري هو رفيقك الإسلامي الشامل، مصمم ليكون معك في رحلتك الإيمانية اليومية. ابقَ على اتصال بدينك مع مجموعة من الميزات الأساسية، كلها في واجهة واحدة جميلة وسهلة الاستخدام.
+
+**الميزات الرئيسية:**
+
+*   **الأذكار والأدعية:** مجموعة كاملة من الأذكار اليومية، بما في ذلك أذكار الصباح والمساء، أذكار ما بعد الصلاة، أذكار النوم، وأذكار الاستيقاظ. عزز ذكرك لله طوال اليوم.
+*   **مواقيت الصلاة:** أوقات صلاة دقيقة بناءً على موقعك، حتى لا تفوتك أي صلاة.
+*   **محدد القبلة:** اعثر بسهولة على اتجاه الكعبة المشرفة باستخدام بوصلة القبلة الدقيقة والموثوقة.
+*   **القرآن الكريم:** احمل المصحف الشريف معك أينما ذهبت. اقرأ وتدبر آيات القرآن الكريم من خلال واجهة نظيفة وسهلة الوصول.
+*   **واجهة سهلة الاستخدام:** مصممة بالبساطة والأناقة، مما يسهل على المستخدمين من جميع الأعمار التصفح والاستفادة من التطبيق.
+
+حمّل تطبيق أذكاري اليوم واجعل أساسيات دينك في متناول يدك.

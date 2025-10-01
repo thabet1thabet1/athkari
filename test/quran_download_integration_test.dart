@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islamicapp/core/quran_download_service.dart';
-import 'package:islamicapp/core/audio_manager.dart';
+import 'package:athkari/core/quran_download_service.dart';
+import 'package:athkari/core/audio_manager.dart';
 
 void main() {
   group('Quran Download Integration Tests', () {

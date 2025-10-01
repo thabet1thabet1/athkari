@@ -1405,10 +1405,8 @@ class _QuranPageViewState extends State<QuranPageView> {
                                                   child: Padding(
                                                     padding: const EdgeInsets.symmetric(horizontal: 2.0),
                                                     child: Image.asset(
-                                                      // For now, use the same image for all ayahs. To use per-ayah images, change the path to:
-                                                      // 'lib/images/ayah_${displayAyahs[i]['numberInSurah']}.png',
                                                       'lib/images/ayah_seperator.png',
-                                                      height: 28, // Adjust to match text size
+                                                      height: 28,
                                                       fit: BoxFit.contain,
                                                     ),
                                                   ),

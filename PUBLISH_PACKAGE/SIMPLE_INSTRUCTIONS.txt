@@ -1,0 +1,27 @@
+ATHKARI ISLAMIC APP - WHAT TO DO:
+
+1. UPLOAD THIS FILE TO PLAY STORE:
+   → app-release.aab (this is your app file)
+
+2. KEEP THESE FILES SAFE (don't upload, just keep):
+   → upload-keystore.jks 
+   → key.properties
+   (you need these for future app updates)
+
+3. WHAT THE PUBLISHER NEEDS TO DO:
+   - Go to Google Play Console
+   - Create new release
+   - Upload the app-release.aab file
+   - Add app name: "Athkari" 
+   - Add description: "Islamic app for prayers and Quran"
+   - Add screenshots (take from phone)
+   - Add app icon (Islamic design)
+   - Publish
+
+4. IMPORTANT INFO:
+   - App package: com.thabet.athkari
+   - App type: Islamic/Religious
+   - Password if needed: athkari123
+
+THAT'S IT! The .md files are just detailed instructions if they need help.
+The main thing is: UPLOAD THE .aab FILE TO PLAY STORE.

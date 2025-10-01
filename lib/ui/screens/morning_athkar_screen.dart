@@ -93,11 +93,11 @@ class _MorningAthkarScreenState extends State<MorningAthkarScreen> {
                 Navigator.of(context).pop();
               },
               child: Text(
-                'Done',
+                'OK',
                 style: GoogleFonts.poppins(
-                  fontSize: 16,
+                  fontSize: 17.sp,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.forestGreen,
+                  color: CupertinoColors.activeBlue,
                 ),
               ),
             ),
@@ -108,11 +108,9 @@ class _MorningAthkarScreenState extends State<MorningAthkarScreen> {
   }
 
   void incrementCount() {
-    if (currentCount < morningAthkar[currentAthkarIndex]['count']) {
-      setState(() {
-        currentCount++;
-      });
-    }
+    setState(() {
+      currentCount++;
+    });
   }
 
   @override
@@ -134,7 +132,7 @@ class _MorningAthkarScreenState extends State<MorningAthkarScreen> {
             title: Text(
               'Morning Athkar',
               style: GoogleFonts.poppins(
-                fontSize: 22.sp,
+                fontSize: 19.sp,
                 fontWeight: FontWeight.bold,
                 color: AppColors.forestGreen,
               ),
@@ -142,43 +140,49 @@ class _MorningAthkarScreenState extends State<MorningAthkarScreen> {
             centerTitle: true,
           ),
           body: Padding(
-            padding: EdgeInsets.all(AppConstants.spacing24),
+            padding: EdgeInsets.all(AppConstants.spacing16),
             child: Column(
               children: [
-                // Athkar Card
-                Expanded(
+                LinearProgressIndicator(
+                  value: (currentAthkarIndex + 1) / morningAthkar.length,
+                  backgroundColor: Colors.grey[300],
+                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.forestGreen),
+                ),
+                SizedBox(height: AppConstants.spacing24 + 12.h),
+                Container(
+                  height: 420.h,
                   child: GestureDetector(
                     onTap: incrementCount,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(AppConstants.cardRadius),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.white.withOpacity(0.85),
-                          borderRadius: BorderRadius.circular(AppConstants.cardRadius),
-                          border: Border.all(
-                            color: AppColors.forestGreen.withOpacity(0.3),
-                            width: 2.0.w,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.forestGreen.withOpacity(0.1),
-                              blurRadius: 16.r,
-                              offset: Offset(0, 8.h),
-                            ),
-                          ],
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+                        border: Border.all(
+                          color: AppColors.forestGreen,
+                          width: 3.0.w,
                         ),
-                        child: Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(AppConstants.spacing16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10.r,
+                            offset: Offset(0, 4.h),
+                          ),
+                        ],
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.all(AppConstants.spacing24),
+                        child: IntrinsicHeight(
+                          child: Center(
                             child: SingleChildScrollView(
                               child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  // Arabic Text
                                   Text(
                                     currentAthkar['arabic'],
                                     style: GoogleFonts.amiri(
-                                      fontSize: 28.sp,
+                                      fontSize: 24.sp,
                                       fontWeight: FontWeight.bold,
                                       color: AppColors.forestGreen,
                                       height: 1.8,
@@ -187,7 +191,6 @@ class _MorningAthkarScreenState extends State<MorningAthkarScreen> {
                                     textDirection: TextDirection.rtl,
                                   ),
                                   SizedBox(height: AppConstants.spacing16),
-                                  // Translation
                                   Text(
                                     currentAthkar['translation'],
                                     style: GoogleFonts.poppins(
@@ -206,14 +209,12 @@ class _MorningAthkarScreenState extends State<MorningAthkarScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: AppConstants.spacing24 * 2), // Larger gap between card and buttons
-                // Counter and Next Button Row
+                SizedBox(height: AppConstants.spacing24 + 16.h),
                 Row(
                   children: [
-                    // Counter Display
                     Expanded(
                       child: Container(
-                        height: 56.h,
+                        height: 48.h,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: AppColors.white,
@@ -233,11 +234,10 @@ class _MorningAthkarScreenState extends State<MorningAthkarScreen> {
                         ),
                       ),
                     ),
-                    SizedBox(width: AppConstants.spacing24), // Larger gap between buttons
-                    // Next Button
+                    SizedBox(width: AppConstants.spacing16),
                     Expanded(
                       child: SizedBox(
-                        height: 56.h,
+                        height: 48.h,
                         child: ElevatedButton(
                           onPressed: nextAthkar,
                           style: ElevatedButton.styleFrom(
@@ -267,4 +267,4 @@ class _MorningAthkarScreenState extends State<MorningAthkarScreen> {
       ],
     );
   }
-} 
+}

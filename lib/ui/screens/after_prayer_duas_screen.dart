@@ -126,7 +126,7 @@ class _AfterPrayerDuasScreenState extends State<AfterPrayerDuasScreen> {
             title: Text(
               'After Prayer Duas',
               style: GoogleFonts.poppins(
-                fontSize: 22.sp,
+                fontSize: 19.sp,
                 fontWeight: FontWeight.bold,
                 color: AppColors.forestGreen,
               ),
@@ -149,7 +149,8 @@ class _AfterPrayerDuasScreenState extends State<AfterPrayerDuasScreen> {
                   valueColor: const AlwaysStoppedAnimation<Color>(AppColors.forestGreen),
                 ),
                 SizedBox(height: AppConstants.spacing24 + 12.h),
-                Expanded(
+                Container(
+                  height: 420.h,
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -179,7 +180,7 @@ class _AfterPrayerDuasScreenState extends State<AfterPrayerDuasScreen> {
                                 Text(
                                   currentDua['arabic'],
                                   style: GoogleFonts.amiri(
-                                    fontSize: 28.sp,
+                                    fontSize: 24.sp,
                                     fontWeight: FontWeight.bold,
                                     color: AppColors.forestGreen,
                                     height: 1.8,
@@ -205,12 +206,12 @@ class _AfterPrayerDuasScreenState extends State<AfterPrayerDuasScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: AppConstants.spacing24 * 2),
+                SizedBox(height: AppConstants.spacing24 + 16.h),
                 Row(
                   children: [
                     Expanded(
                       child: Container(
-                        height: 56.h,
+                        height: 48.h,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: AppColors.white,
@@ -230,10 +231,10 @@ class _AfterPrayerDuasScreenState extends State<AfterPrayerDuasScreen> {
                         ),
                       ),
                     ),
-                    SizedBox(width: AppConstants.spacing24),
+                    SizedBox(width: AppConstants.spacing16),
                     Expanded(
                       child: SizedBox(
-                        height: 56.h,
+                        height: 48.h,
                         child: ElevatedButton(
                           onPressed: nextDua,
                           style: ElevatedButton.styleFrom(
